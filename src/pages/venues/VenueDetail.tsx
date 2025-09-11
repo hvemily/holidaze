@@ -2,7 +2,9 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../../utils/api'
-import type { Venue, Booking } from '@/types'
+import type { Venue, Booking } from '../../utils/types'
+import type { Media, VenueMedia } from '../../utils/types'
+type AnyMedia = Media | VenueMedia;
 import { useAuth } from '../../stores/auth'
 
 export default function VenueDetail() {
@@ -44,7 +46,7 @@ export default function VenueDetail() {
         </div>
         {gallery.length > 1 && (
           <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-            {gallery.map((m, i) => (
+              {gallery.map((m: AnyMedia, i: number) => (
               <button
                 key={i}
                 onClick={() => setActive(i)}

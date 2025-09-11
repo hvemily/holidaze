@@ -1,6 +1,6 @@
 // src/components/Layout.tsx
 import { NavLink, Link } from 'react-router-dom'
-import { PropsWithChildren } from 'react'
+import type { PropsWithChildren } from 'react'
 import { useAuth } from '../stores/auth'
 
 export default function Layout({ children }: PropsWithChildren) {

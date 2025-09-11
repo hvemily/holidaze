@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { api } from '@/utils/api'
+import { api } from '../../utils/api'
 import type { Venue } from '../../utils/types'
-import VenueForm, { type VenuePayload } from '../manager/VenueForm'
+import VenueForm, { type VenuePayload } from './VenueForm'
+
+type RouteParams = { id: string }
 
 export default function ManagerEditVenue() {
-  const { id } = useParams()
+  const { id } = useParams<RouteParams>()
   const nav = useNavigate()
   const [venue, setVenue] = useState<Venue | null>(null)
   const [loading, setLoading] = useState(true)
@@ -14,26 +16,43 @@ export default function ManagerEditVenue() {
 
   useEffect(() => {
     let ignore = false
+
+    // tidlig guard hvis id mangler
+    if (!id) {
+      setErr('Missing venue id')
+      setLoading(false)
+      return
+    }
+
     ;(async () => {
       try {
         setLoading(true)
-        const res = await api.get<{ data: Venue }>(`/holidaze/venues/${id}`)
-        if (!ignore) setVenue(res.data)
-      } catch (e: any) {
-        if (!ignore) setErr(e.message || 'Failed to load venue')
+        setErr(null)
+        const res = await api.get<{ data: Venue }>(`/holidaze/venues/${encodeURIComponent(id)}`)
+        if (!ignore) setVenue(res.data ?? null)
+      } catch (error: unknown) {
+        if (!ignore) {
+          const msg = error instanceof Error ? error.message : 'Failed to load venue'
+          setErr(msg)
+        }
       } finally {
         if (!ignore) setLoading(false)
       }
     })()
+
     return () => { ignore = true }
   }, [id])
 
   async function handleSave(payload: VenuePayload) {
     if (!id) return
     setSaving(true)
+    setErr(null)
     try {
-      await api.put(`/holidaze/venues/${id}`, payload)
-      nav(`/venues/${id}`)
+      await api.put(`/holidaze/venues/${encodeURIComponent(id)}`, payload)
+      nav(`/venues/${encodeURIComponent(id)}`)
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Failed to save venue'
+      setErr(msg)
     } finally {
       setSaving(false)
     }

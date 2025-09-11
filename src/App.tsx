@@ -10,7 +10,7 @@ import Profile from './pages/profile/Profile'
 import Protected from './components/Protected'
 import ManagerDashboard from './pages/manager/ManagerDashboard'
 import ManagerCreateVenue from './pages/manager/ManagerCreateVenue'
-import ManagerEditVenue from './pages/manager/ManagerEditVenue'
+import ManagerEditVenue from './pages/manager/ManagerEditVenueList'
 
 export default function App() {
   return (

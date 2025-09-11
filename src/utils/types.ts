@@ -11,13 +11,6 @@ export type Profile = {
   accessToken?: string
 }
 
-export type VenueMeta = {
-  wifi?: boolean
-  parking?: boolean
-  breakfast?: boolean
-  pets?: boolean
-}
-
 export type VenueLocation = {
   address?: string
   city?: string
@@ -32,6 +25,13 @@ export type VenueOwner = {
   avatar?: VenueMedia
 }
 
+export type VenueMeta = {
+  wifi?: boolean
+  parking?: boolean
+  breakfast?: boolean
+  pets?: boolean
+}
+
 export type Venue = {
   id: string
   name: string
@@ -39,12 +39,15 @@ export type Venue = {
   media: VenueMedia[]
   price: number
   rating?: number
-  created: string          // 👈 legg til
-  updated: string          // 👈 legg til
+  created: string
+  updated: string
   location?: VenueLocation
   owner?: VenueOwner
   _count?: { bookings: number }
+  meta?: VenueMeta
+  maxGuests?: number
 }
+
 
 export type Booking = {
   id: string

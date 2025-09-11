@@ -4,7 +4,14 @@ import { api } from '../../utils/api'
 import type { Venue } from '../../utils/types'
 import { Link } from 'react-router-dom'
 
-const SORT_OPTIONS = [
+type SortValue =
+  | 'created:desc'
+  | 'created:asc'
+  | 'price:asc'
+  | 'price:desc'
+  | 'rating:desc'
+
+const SORT_OPTIONS: Array<{ value: SortValue; label: string }> = [
   { value: 'created:desc', label: 'Newest first' },
   { value: 'created:asc',  label: 'Oldest first' },
   { value: 'price:asc',    label: 'Price • Low → High' },
@@ -34,8 +41,7 @@ const PAGES_TO_FETCH  = 5
 // ✅ Hent innlogget profil via API – ikke stol på localStorage
 async function fetchMeName(): Promise<string | null> {
   try {
-    // api.ts bør allerede sette Authorization-header hvis du er innlogget
-    const res = await api.get<{ data: { name?: string } }>('/auth/profile?_=' + Date.now())
+    const res = await api.get<{ data: { name?: string } }>(`/auth/profile?_=${Date.now()}`)
     return res?.data?.name ?? null
   } catch {
     return null
@@ -63,7 +69,9 @@ async function fetchVenuePages(base: string, pages: number, q?: string) {
 async function fetchMyVenuesByName(name: string | null): Promise<Venue[]> {
   if (!name) return []
   try {
-    const res = await api.get<{ data: Venue[] }>(`/holidaze/profiles/${encodeURIComponent(name)}/venues?_=${Date.now()}`)
+    const res = await api.get<{ data: Venue[] }>(
+      `/holidaze/profiles/${encodeURIComponent(name)}/venues?_=${Date.now()}`
+    )
     return res.data || []
   } catch {
     return []
@@ -73,7 +81,9 @@ async function fetchMyVenuesByName(name: string | null): Promise<Venue[]> {
 // Hent spesifikk venue (din)
 async function fetchVenueById(id: string): Promise<Venue | null> {
   try {
-    const res = await api.get<{ data: Venue }>(`/holidaze/venues/${encodeURIComponent(id)}?_=${Date.now()}`)
+    const res = await api.get<{ data: Venue }>(
+      `/holidaze/venues/${encodeURIComponent(id)}?_=${Date.now()}`
+    )
     return res.data || null
   } catch {
     return null
@@ -81,19 +91,23 @@ async function fetchVenueById(id: string): Promise<Venue | null> {
 }
 
 // Klientsort
-function sortVenues(data: Venue[], sort: string): Venue[] {
+function sortVenues(data: Venue[], sort: SortValue): Venue[] {
   const arr = data.slice()
   if (sort === 'created:desc') {
     arr.sort((a, b) => toTs(b.created) - toTs(a.created))
   } else if (sort === 'created:asc') {
     arr.sort((a, b) => toTs(a.created) - toTs(b.created))
   } else if (sort === 'price:asc') {
-    arr.sort((a, b) =>
-      toNum(a.price, Number.POSITIVE_INFINITY) - toNum(b.price, Number.POSITIVE_INFINITY)
+    arr.sort(
+      (a, b) =>
+        toNum(a.price, Number.POSITIVE_INFINITY) -
+        toNum(b.price, Number.POSITIVE_INFINITY)
     )
   } else if (sort === 'price:desc') {
-    arr.sort((a, b) =>
-      toNum(b.price, Number.NEGATIVE_INFINITY) - toNum(a.price, Number.NEGATIVE_INFINITY)
+    arr.sort(
+      (a, b) =>
+        toNum(b.price, Number.NEGATIVE_INFINITY) -
+        toNum(a.price, Number.NEGATIVE_INFINITY)
     )
   } else if (sort === 'rating:desc') {
     arr.sort((a, b) => toNum(b.rating, 0) - toNum(a.rating, 0))
@@ -103,7 +117,7 @@ function sortVenues(data: Venue[], sort: string): Venue[] {
 
 export default function Venues() {
   const [q, setQ] = useState('')
-  const [sort, setSort] = useState('created:desc')
+  const [sort, setSort] = useState<SortValue>('created:desc')
   const [loading, setLoading] = useState(true)
   const [venues, setVenues] = useState<Venue[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -114,7 +128,8 @@ export default function Venues() {
     let ignore = false
     ;(async () => {
       try {
-        setLoading(true); setError(null)
+        setLoading(true)
+        setError(null)
 
         const effectiveQ = qDebounced.trim()
 
@@ -142,7 +157,7 @@ export default function Venues() {
         // 4) Sortér etter valgt kriterium
         merged = sortVenues(merged, sort)
 
-        // 5) 🔒 Idiotsikkert: sørg for at din venue er helt øverst i arrayet
+        // 5) 🔒 Sørg for at din venue er helt øverst i arrayet
         if (myDirect) {
           const idx = merged.findIndex(v => v.id === myDirect.id)
           if (idx > 0) {
@@ -154,7 +169,7 @@ export default function Venues() {
         // 6) Sett state – vi tar topp 100
         if (!ignore) setVenues(merged.slice(0, LIMIT_PER_PAGE))
 
-        // Debug-logger (kan kommenteres når du er fornøyd)
+        // Debug (kan kommenteres ut)
         console.log('[Venues] me name:', meName)
         console.log('[Venues] global count:', globalList.length)
         console.log('[Venues] my count:', myList.length)
@@ -162,8 +177,9 @@ export default function Venues() {
         console.log('[Venues] myDirect?', Boolean(myDirect))
         const idx = merged.findIndex(v => v.id === DEBUG_MY_VENUE_ID)
         console.log('[Venues] my index after final sort+pin:', idx)
-      } catch (e: any) {
-        if (!ignore) setError(e?.message || 'Failed to load venues')
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Failed to load venues'
+        if (!ignore) setError(msg)
       } finally {
         if (!ignore) setLoading(false)
       }
@@ -194,7 +210,7 @@ export default function Venues() {
         )}
         <select
           value={sort}
-          onChange={(e) => setSort(e.target.value)}
+          onChange={(e) => setSort(e.target.value as SortValue)}
           className="rounded-xl border px-3 py-2"
           aria-label="Sort venues"
         >
