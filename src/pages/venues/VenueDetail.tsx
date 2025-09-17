@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom'
 import { api } from '@/utils/api'
 import type { Venue, Booking } from '@/utils/types'
 import VenueCalendar from '@/components/VenueCalendar'
+import RatingStars from '@/components/RatingStars'
 
 type RouteParams = { id: string }
 type RangeValue = Date | [Date, Date] | null
@@ -21,23 +22,23 @@ export default function VenueDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // kalender / booking state (hooks alltid før ev. return)
+  // kalender / booking state
   const [range, setRange] = useState<RangeValue>(null)
   const [guests, setGuests] = useState<number>(1)
 
-  // disse hooks må også være før evt. early return
   const canReserve = useMemo(
     () => Array.isArray(range) && !!range[0] && !!range[1],
     [range]
   )
 
-  // kan beregnes selv om venue er null
   const nights = useMemo(
     () => (Array.isArray(range) ? nightsBetween(range[0], range[1]) : 0),
     [range]
   )
+
   const nightlyPrice = venue?.price ?? 0
   const total = nights * nightlyPrice
+  const maxGuests = Math.max(1, Number(venue?.maxGuests ?? 1))
 
   useEffect(() => {
     if (!id) return
@@ -60,6 +61,10 @@ export default function VenueDetail() {
 
   async function handleReserve() {
     if (!id || !Array.isArray(range) || !range[0] || !range[1]) return
+    if (guests > maxGuests) {
+      alert(`This venue allows up to ${maxGuests} guest${maxGuests === 1 ? '' : 's'}.`)
+      return
+    }
     try {
       const from = new Date(range[0]); from.setHours(12, 0, 0, 0)
       const to   = new Date(range[1]); to.setHours(10, 0, 0, 0)
@@ -83,22 +88,21 @@ export default function VenueDetail() {
     }
   }
 
-  // UI
   const gallery = venue?.media?.length
     ? venue.media
     : venue
       ? [{ url: 'https://picsum.photos/seed/venue/800/500', alt: venue.name }]
       : []
 
+  const amenities = venue?.meta ?? {}
+
   return (
     <section className="grid gap-6">
-      {/* Loading / error / not found */}
       {loading && <p>Loading venue…</p>}
       {!loading && (error || !venue) && (
         <p className="text-red-600">{error ?? 'Venue not found.'}</p>
       )}
 
-      {/* Resten rendres bare når vi faktisk har venue */}
       {!loading && venue && (
         <>
           {/* Header / bilder */}
@@ -117,12 +121,31 @@ export default function VenueDetail() {
                 ))}
               </div>
             )}
-            <h1 className="text-2xl font-bold">{venue.name}</h1>
-            <p className="text-gray-700">{venue.description}</p>
+
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold">{venue.name}</h1>
+              <RatingStars value={Number(venue.rating) || 0} size="md" showNumber />
+            </div>
+
             <div className="text-sm text-gray-600">
               {venue.location?.city ? `${venue.location.city}, ` : ''}
               {venue.location?.country ?? ''}
             </div>
+
+            {/* Amenities */}
+            <div className="mt-1 text-sm text-gray-700">
+              <h3 className="font-semibold mb-1">Features & Amenities</h3>
+              <ul className="grid gap-1">
+                {amenities?.wifi && <li>✅ Wifi</li>}
+                {amenities?.breakfast && <li>✅ Breakfast included</li>}
+                {amenities?.parking && <li>✅ Parking</li>}
+                {amenities?.pets && <li>✅ Pets</li>}
+                {!amenities?.wifi && !amenities?.breakfast && !amenities?.parking && !amenities?.pets && (
+                  <li className="text-gray-500">No amenities listed.</li>
+                )}
+              </ul>
+            </div>
+
             <div className="font-medium text-lg">${nightlyPrice} /night</div>
           </div>
 
@@ -138,16 +161,21 @@ export default function VenueDetail() {
             />
 
             <div className="flex flex-wrap items-center gap-3">
-              <label className="text-sm">
+              <label className="text-sm flex items-center gap-2">
                 Guests:
                 <input
                   type="number"
                   min={1}
+                  max={maxGuests}
                   value={guests}
-                  onChange={(e) => setGuests(Math.max(1, Number(e.target.value) || 1))}
-                  className="ml-2 w-20 rounded border px-2 py-1"
+                  onChange={(e) => {
+                    const v = Math.max(1, Math.min(maxGuests, Number(e.target.value) || 1))
+                    setGuests(v)
+                  }}
+                  className="ml-1 w-24 rounded border px-2 py-1"
                 />
               </label>
+              <span className="text-xs text-gray-500">Max {maxGuests} guest{maxGuests === 1 ? '' : 's'}</span>
 
               <button
                 className="rounded-lg bg-black text-white px-4 py-2 disabled:opacity-50"
@@ -155,7 +183,7 @@ export default function VenueDetail() {
                 disabled={!canReserve}
                 title={!canReserve ? 'Select a date range' : 'Reserve'}
               >
-                Reserve
+                Book now
               </button>
 
               {nights > 0 && (

@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Venue } from '@/utils/types'
 import VenueCard from '@/components/VenueCard'
+import Hero from '@/components/Hero'
 import {
   LIMIT,
   PAGE_FILL_TARGET,
@@ -28,11 +29,10 @@ export default function Venues() {
   const [error, setError] = useState<string | null>(null)
 
   // Søkekontroll
-  const [searchTick, setSearchTick] = useState(0) // brukes for explicit search (Enter/knapp)
-  const [idHit, setIdHit] = useState(false)       // hvis vi fant eksakt ID: ikke fritekstfiltrer
+  const [searchTick, setSearchTick] = useState(0)
+  const [idHit, setIdHit] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
 
-  // Auto-load ved mount + sort endres. ID-søk når du skriver inn/verifiserer søket (via Search)
   useEffect(() => {
     let mounted = true
     ;(async () => {
@@ -44,7 +44,7 @@ export default function Venues() {
 
         const qTrim = q.trim()
 
-        // --- ID først om noe står i feltet (tolerant: direkte + UUID i tekst) ---
+        // --- ID først ---
         if (qTrim) {
           const direct = await fetchVenueById(qTrim)
           if (direct) {
@@ -58,7 +58,6 @@ export default function Venues() {
               return
             }
           }
-
           const uuid = extractUuid(qTrim)
           if (uuid) {
             const byUuid = await fetchVenueById(uuid)
@@ -79,7 +78,7 @@ export default function Venues() {
           }
         }
 
-        // --- Ellers: auto-load nyeste først og fyll ~20 synlige treff (kun Norge) ---
+        // --- Ellers: auto-load nyeste først & fyll ~20 synlige Norge-treff ---
         let all: Venue[] = []
         let current = 1
         while (true) {
@@ -108,7 +107,7 @@ export default function Venues() {
       }
     })()
     return () => { mounted = false; abortRef.current?.abort() }
-  }, [searchTick, sort]) // mount, Search, sort change
+  }, [searchTick, sort])
 
   // Load more
   const onLoadMore = async () => {
@@ -128,92 +127,98 @@ export default function Venues() {
     }
   }
 
-  // Endelig synlig liste
+  // Synlig liste
   const visible = useMemo(() => {
-    if (idHit) return items // ID-gren har allerede landjekk
+    if (idHit) return items
     const qTrim = q.trim()
     return items.filter(v => inNorway(v) && matchesQuery(v, qTrim))
   }, [items, q, idHit])
 
   return (
-    <section className="grid gap-4">
-      {/* Airbnb-style search bar */}
-      <div className="mx-auto w-full max-w-3xl">
-        <form
-          onSubmit={(e) => { e.preventDefault(); setSearchTick(t => t + 1) }}
-          className="flex items-center rounded-full border border-gray-300 shadow-sm bg-white overflow-hidden"
-          role="search"
-          aria-label="Search venues in Norway"
-        >
-          <input
-            type="text"
-            placeholder="Search by city, venue name or ID (Norway)"
-            className="flex-1 px-4 py-3 text-sm focus:outline-none"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            aria-label="Search by city, venue name or ID"
-          />
-          {q && (
-            <button
-              type="button"
-              onClick={() => { setQ(''); setSearchTick(t => t + 1) }}
-              className="px-3 text-gray-400 hover:text-gray-600"
-              aria-label="Clear search"
-              title="Clear"
-            >
-              ✕
-            </button>
-          )}
-          <button
-            type="submit"
-            className="px-5 py-3 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
+    <>
+      {/* Hero med Norge-bildet */}
+      <Hero />
+
+      {/* Innholdet under hero */}
+      <section id="venues-list" className="grid gap-6 max-w-6xl mx-auto px-4 py-8">
+        {/* Searchbar */}
+        <div className="mx-auto w-full max-w-3xl">
+          <form
+            onSubmit={(e) => { e.preventDefault(); setSearchTick(t => t + 1) }}
+            className="flex items-center rounded-full border border-gray-300 shadow-sm bg-white overflow-hidden"
+            role="search"
+            aria-label="Search venues in Norway"
           >
-            Search
-          </button>
-        </form>
-      </div>
-
-      {/* Sort */}
-      <div className="flex items-center gap-2 justify-end">
-        <label className="text-sm text-gray-600" htmlFor="sort">Sort</label>
-        <select
-          id="sort"
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortValue)}
-          className="rounded-xl border px-3 py-2"
-          aria-label="Sort venues"
-        >
-          {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </div>
-
-      {loading && <p>Loading venues…</p>}
-      {error && <p className="text-red-600">{error}</p>}
-      {!loading && !error && visible.length === 0 && (
-        <p className="text-gray-600">No venues found.</p>
-      )}
-
-      {!loading && !error && visible.length > 0 && (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.map(v => <VenueCard key={v.id} venue={v} />)}
-          </div>
-
-          {hasMore && (
-            <div className="mt-4 flex justify-center">
+            <input
+              type="text"
+              placeholder="Search by city, venue name or ID (Norway)"
+              className="flex-1 px-4 py-3 text-sm focus:outline-none"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              aria-label="Search by city, venue name or ID"
+            />
+            {q && (
               <button
                 type="button"
-                onClick={onLoadMore}
-                className="rounded-xl border px-4 py-2"
-                aria-label="Load more venues"
-                disabled={loading}
+                onClick={() => { setQ(''); setSearchTick(t => t + 1) }}
+                className="px-3 text-gray-400 hover:text-gray-600"
+                aria-label="Clear search"
+                title="Clear"
               >
-                {loading ? 'Loading…' : `Load more (${LIMIT})`}
+                ✕
               </button>
+            )}
+            <button
+              type="submit"
+              className="px-5 py-3 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
+            >
+              Search
+            </button>
+          </form>
+        </div>
+
+        {/* Sort */}
+        <div className="flex items-center gap-2 justify-end">
+          <label className="text-sm text-gray-600" htmlFor="sort">Sort</label>
+          <select
+            id="sort"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortValue)}
+            className="rounded-xl border px-3 py-2"
+            aria-label="Sort venues"
+          >
+            {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
+
+        {loading && <p>Loading venues…</p>}
+        {error && <p className="text-red-600">{error}</p>}
+        {!loading && !error && visible.length === 0 && (
+          <p className="text-gray-600">No venues found.</p>
+        )}
+
+        {!loading && !error && visible.length > 0 && (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visible.map(v => <VenueCard key={v.id} venue={v} />)}
             </div>
-          )}
-        </>
-      )}
-    </section>
+
+            {hasMore && (
+              <div className="mt-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={onLoadMore}
+                  className="rounded-xl border px-4 py-2"
+                  aria-label="Load more venues"
+                  disabled={loading}
+                >
+                  {loading ? 'Loading…' : `Load more (${LIMIT})`}
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </section>
+    </>
   )
 }

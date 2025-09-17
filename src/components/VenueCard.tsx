@@ -1,6 +1,7 @@
 // src/components/VenueCard.tsx
 import { Link } from 'react-router-dom'
 import type { Venue } from '@/utils/types'
+import RatingStars from '@/components/RatingStars'
 
 type Props = { venue: Venue }
 
@@ -12,6 +13,12 @@ export default function VenueCard({ venue: v }: Props) {
       <div className="p-4 grid gap-2">
         <h3 className="font-semibold line-clamp-1">{v.name}</h3>
         <p className="text-xs text-gray-400">{new Date(v.created).toLocaleString()}</p>
+
+        {/* ⭐ rating */}
+        <div className="flex items-center">
+          <RatingStars value={Number(v.rating) || 0} size="sm" showNumber />
+        </div>
+
         <p className="text-sm text-gray-600 line-clamp-2">{v.description}</p>
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium">${v.price} /night</span>

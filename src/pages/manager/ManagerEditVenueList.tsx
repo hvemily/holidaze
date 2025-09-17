@@ -1,3 +1,4 @@
+// src/pages/manager/ManagerEditVenueList.tsx
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../../utils/api'
@@ -17,7 +18,6 @@ export default function ManagerEditVenue() {
   useEffect(() => {
     let ignore = false
 
-    // tidlig guard hvis id mangler
     if (!id) {
       setErr('Missing venue id')
       setLoading(false)
