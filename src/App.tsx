@@ -1,7 +1,6 @@
 // src/App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
-import Home from './pages/Home'
 import Venues from './pages/venues/Venues'
 import VenueDetail from './pages/venues/VenueDetail'
 import Login from './pages/auth/Login'
@@ -16,9 +15,12 @@ export default function App() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* Home peker direkte til Venues */}
+        <Route path="/" element={<Venues />} />
+
         <Route path="/venues" element={<Venues />} />
         <Route path="/venues/:id" element={<VenueDetail />} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -30,14 +32,16 @@ export default function App() {
             </Protected>
           }
         />
+
         <Route
-        path="/manager"
-        element={
-          <Protected requireManager>
-            <ManagerDashboard />
-          </Protected>
-        }
+          path="/manager"
+          element={
+            <Protected requireManager>
+              <ManagerDashboard />
+            </Protected>
+          }
         />
+
         <Route
           path="/manager/venues/new"
           element={
@@ -46,6 +50,7 @@ export default function App() {
             </Protected>
           }
         />
+
         <Route
           path="/manager/venues/:id/edit"
           element={
@@ -55,7 +60,8 @@ export default function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* 404 → venues */}
+        <Route path="*" element={<Navigate to="/venues" replace />} />
       </Routes>
     </Layout>
   )

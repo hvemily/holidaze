@@ -37,6 +37,7 @@ export type Venue = {
   name: string
   description?: string
   media: VenueMedia[]
+  bookings?: Booking[]
   price: number
   rating?: number
   created: string

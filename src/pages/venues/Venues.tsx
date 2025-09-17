@@ -1,265 +1,218 @@
 // src/pages/venues/Venues.tsx
-import { useEffect, useState } from 'react'
-import { api } from '../../utils/api'
-import type { Venue } from '../../utils/types'
-import { Link } from 'react-router-dom'
-
-type SortValue =
-  | 'created:desc'
-  | 'created:asc'
-  | 'price:asc'
-  | 'price:desc'
-  | 'rating:desc'
-
-const SORT_OPTIONS: Array<{ value: SortValue; label: string }> = [
-  { value: 'created:desc', label: 'Newest first' },
-  { value: 'created:asc',  label: 'Oldest first' },
-  { value: 'price:asc',    label: 'Price • Low → High' },
-  { value: 'price:desc',   label: 'Price • High → Low' },
-  { value: 'rating:desc',  label: 'Rating' },
-]
-
-// 👇 Din venue-ID (for feilsøk og synlighet)
-const DEBUG_MY_VENUE_ID = 'd8cfbc47-a5c6-48cc-9328-a5a88368ed27'
-
-function useDebounced<T>(value: T, delay = 300) {
-  const [v, setV] = useState(value)
-  useEffect(() => {
-    const id = setTimeout(() => setV(value), delay)
-    return () => clearTimeout(id)
-  }, [value, delay])
-  return v
-}
-
-const toNum = (v: unknown, fb = 0) => (Number.isFinite(Number(v)) ? Number(v) : fb)
-const toTs  = (v?: string) => (v ? new Date(v).getTime() : 0)
-
-const MIN_Q = 2
-const LIMIT_PER_PAGE = 100
-const PAGES_TO_FETCH  = 5
-
-// ✅ Hent innlogget profil via API – ikke stol på localStorage
-async function fetchMeName(): Promise<string | null> {
-  try {
-    const res = await api.get<{ data: { name?: string } }>(`/auth/profile?_=${Date.now()}`)
-    return res?.data?.name ?? null
-  } catch {
-    return null
-  }
-}
-
-// Hent flere sider fra /venues (uten serversort → ingen 500)
-async function fetchVenuePages(base: string, pages: number, q?: string) {
-  const all: Venue[] = []
-  for (let page = 1; page <= pages; page++) {
-    const p = new URLSearchParams()
-    p.set('limit', String(LIMIT_PER_PAGE))
-    p.set('page', String(page))
-    if (q && q.trim().length >= MIN_Q) p.set('q', q.trim())
-    p.set('_', String(Date.now()))
-    const res = await api.get<{ data: Venue[] }>(`${base}?${p.toString()}`)
-    const batch = res.data || []
-    all.push(...batch)
-    if (batch.length < LIMIT_PER_PAGE) break
-  }
-  return all
-}
-
-// Hent dine venues via profil
-async function fetchMyVenuesByName(name: string | null): Promise<Venue[]> {
-  if (!name) return []
-  try {
-    const res = await api.get<{ data: Venue[] }>(
-      `/holidaze/profiles/${encodeURIComponent(name)}/venues?_=${Date.now()}`
-    )
-    return res.data || []
-  } catch {
-    return []
-  }
-}
-
-// Hent spesifikk venue (din)
-async function fetchVenueById(id: string): Promise<Venue | null> {
-  try {
-    const res = await api.get<{ data: Venue }>(
-      `/holidaze/venues/${encodeURIComponent(id)}?_=${Date.now()}`
-    )
-    return res.data || null
-  } catch {
-    return null
-  }
-}
-
-// Klientsort
-function sortVenues(data: Venue[], sort: SortValue): Venue[] {
-  const arr = data.slice()
-  if (sort === 'created:desc') {
-    arr.sort((a, b) => toTs(b.created) - toTs(a.created))
-  } else if (sort === 'created:asc') {
-    arr.sort((a, b) => toTs(a.created) - toTs(b.created))
-  } else if (sort === 'price:asc') {
-    arr.sort(
-      (a, b) =>
-        toNum(a.price, Number.POSITIVE_INFINITY) -
-        toNum(b.price, Number.POSITIVE_INFINITY)
-    )
-  } else if (sort === 'price:desc') {
-    arr.sort(
-      (a, b) =>
-        toNum(b.price, Number.NEGATIVE_INFINITY) -
-        toNum(a.price, Number.NEGATIVE_INFINITY)
-    )
-  } else if (sort === 'rating:desc') {
-    arr.sort((a, b) => toNum(b.rating, 0) - toNum(a.rating, 0))
-  }
-  return arr
-}
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { Venue } from '@/utils/types'
+import VenueCard from '@/components/VenueCard'
+import {
+  LIMIT,
+  PAGE_FILL_TARGET,
+  SORT_OPTIONS,
+  type SortValue,
+  extractUuid,
+  fetchPage,
+  fetchVenueById,
+  inNorway,
+  localSort,
+  matchesQuery,
+} from '@/utils/venues'
 
 export default function Venues() {
+  // Input: ett felt (by/venue/ID)
   const [q, setQ] = useState('')
   const [sort, setSort] = useState<SortValue>('created:desc')
-  const [loading, setLoading] = useState(true)
-  const [venues, setVenues] = useState<Venue[]>([])
+
+  // Data & status
+  const [items, setItems] = useState<Venue[]>([])
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const qDebounced = useDebounced(q, 300)
+  // Søkekontroll
+  const [searchTick, setSearchTick] = useState(0) // brukes for explicit search (Enter/knapp)
+  const [idHit, setIdHit] = useState(false)       // hvis vi fant eksakt ID: ikke fritekstfiltrer
+  const abortRef = useRef<AbortController | null>(null)
 
+  // Auto-load ved mount + sort endres. ID-søk når du skriver inn/verifiserer søket (via Search)
   useEffect(() => {
-    let ignore = false
+    let mounted = true
     ;(async () => {
       try {
-        setLoading(true)
-        setError(null)
+        setLoading(true); setError(null); setItems([]); setPage(1); setHasMore(true); setIdHit(false)
+        abortRef.current?.abort()
+        const ac = new AbortController()
+        abortRef.current = ac
 
-        const effectiveQ = qDebounced.trim()
+        const qTrim = q.trim()
 
-        // 1) Finn meg via API (ikke localStorage)
-        const meName = await fetchMeName()
+        // --- ID først om noe står i feltet (tolerant: direkte + UUID i tekst) ---
+        if (qTrim) {
+          const direct = await fetchVenueById(qTrim)
+          if (direct) {
+            if (inNorway(direct)) {
+              setItems(localSort([direct], sort))
+              setHasMore(false)
+              setIdHit(true)
+              return
+            } else {
+              setItems([]); setHasMore(false); setError('That venue exists, but it is not in Norway.')
+              return
+            }
+          }
 
-        // 2) Hent global + mine + min direkte-ID parallelt
-        const [globalList, myList, myDirect] = await Promise.all([
-          fetchVenuePages('/holidaze/venues', PAGES_TO_FETCH, effectiveQ),
-          fetchMyVenuesByName(meName),
-          fetchVenueById(DEBUG_MY_VENUE_ID),
-        ])
-
-        // 3) Merge + dedupe
-        const map = new Map<string, Venue>()
-        for (const v of [...globalList, ...myList]) if (v?.id) map.set(v.id, v)
-
-        // — Hvis vi fikk den direkte og den ikke var i merged, legg den inn
-        if (myDirect && !map.has(myDirect.id)) {
-          map.set(myDirect.id, myDirect)
-        }
-
-        let merged = Array.from(map.values())
-
-        // 4) Sortér etter valgt kriterium
-        merged = sortVenues(merged, sort)
-
-        // 5) 🔒 Sørg for at din venue er helt øverst i arrayet
-        if (myDirect) {
-          const idx = merged.findIndex(v => v.id === myDirect.id)
-          if (idx > 0) {
-            const [item] = merged.splice(idx, 1)
-            merged.unshift(item)
+          const uuid = extractUuid(qTrim)
+          if (uuid) {
+            const byUuid = await fetchVenueById(uuid)
+            if (byUuid) {
+              if (inNorway(byUuid)) {
+                setItems(localSort([byUuid], sort))
+                setHasMore(false)
+                setIdHit(true)
+                return
+              } else {
+                setItems([]); setHasMore(false); setError('That venue exists, but it is not in Norway.')
+                return
+              }
+            } else {
+              setItems([]); setHasMore(false); setError('No venue found with that ID.')
+              return
+            }
           }
         }
 
-        // 6) Sett state – vi tar topp 100
-        if (!ignore) setVenues(merged.slice(0, LIMIT_PER_PAGE))
+        // --- Ellers: auto-load nyeste først og fyll ~20 synlige treff (kun Norge) ---
+        let all: Venue[] = []
+        let current = 1
+        while (true) {
+          const batch = await fetchPage(current, sort)
+          if (!mounted) return
+          if (batch.length === 0) { setHasMore(false); break }
 
-        // Debug (kan kommenteres ut)
-        console.log('[Venues] me name:', meName)
-        console.log('[Venues] global count:', globalList.length)
-        console.log('[Venues] my count:', myList.length)
-        console.log('[Venues] merged (post-merge) count:', merged.length)
-        console.log('[Venues] myDirect?', Boolean(myDirect))
-        const idx = merged.findIndex(v => v.id === DEBUG_MY_VENUE_ID)
-        console.log('[Venues] my index after final sort+pin:', idx)
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : 'Failed to load venues'
-        if (!ignore) setError(msg)
+          all = all.concat(batch)
+          const sorted = localSort(all, sort)
+          const visibleCount = sorted.filter(v => inNorway(v) && matchesQuery(v, qTrim)).length
+
+          const lastPage = batch.length < LIMIT
+          if (visibleCount >= PAGE_FILL_TARGET || lastPage) {
+            setItems(sorted)
+            setPage(current)
+            setHasMore(!lastPage)
+            break
+          }
+          current += 1
+        }
+      } catch (e: unknown) {
+        if (!mounted) return
+        setError(e instanceof Error ? e.message : 'Failed to load venues')
       } finally {
-        if (!ignore) setLoading(false)
+        if (mounted) setLoading(false)
       }
     })()
-    return () => { ignore = true }
-  }, [qDebounced, sort])
+    return () => { mounted = false; abortRef.current?.abort() }
+  }, [searchTick, sort]) // mount, Search, sort change
+
+  // Load more
+  const onLoadMore = async () => {
+    if (loading || !hasMore) return
+    try {
+      setLoading(true)
+      const nextPage = page + 1
+      const next = await fetchPage(nextPage, sort)
+      const merged = localSort(items.concat(next), sort)
+      setItems(merged)
+      setPage(nextPage)
+      setHasMore(next.length === LIMIT)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to load venues')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Endelig synlig liste
+  const visible = useMemo(() => {
+    if (idHit) return items // ID-gren har allerede landjekk
+    const qTrim = q.trim()
+    return items.filter(v => inNorway(v) && matchesQuery(v, qTrim))
+  }, [items, q, idHit])
 
   return (
     <section className="grid gap-4">
-      <div className="flex items-center gap-2">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search venues..."
-          className="w-full rounded-xl border px-3 py-2"
-          aria-label="Search venues"
-        />
-        {!!q && (
+      {/* Airbnb-style search bar */}
+      <div className="mx-auto w-full max-w-3xl">
+        <form
+          onSubmit={(e) => { e.preventDefault(); setSearchTick(t => t + 1) }}
+          className="flex items-center rounded-full border border-gray-300 shadow-sm bg-white overflow-hidden"
+          role="search"
+          aria-label="Search venues in Norway"
+        >
+          <input
+            type="text"
+            placeholder="Search by city, venue name or ID (Norway)"
+            className="flex-1 px-4 py-3 text-sm focus:outline-none"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            aria-label="Search by city, venue name or ID"
+          />
+          {q && (
+            <button
+              type="button"
+              onClick={() => { setQ(''); setSearchTick(t => t + 1) }}
+              className="px-3 text-gray-400 hover:text-gray-600"
+              aria-label="Clear search"
+              title="Clear"
+            >
+              ✕
+            </button>
+          )}
           <button
-            type="button"
-            onClick={() => setQ('')}
-            className="rounded-xl border px-3 py-2"
-            aria-label="Clear search"
-            title="Clear"
+            type="submit"
+            className="px-5 py-3 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition"
           >
-            ✕
+            Search
           </button>
-        )}
+        </form>
+      </div>
+
+      {/* Sort */}
+      <div className="flex items-center gap-2 justify-end">
+        <label className="text-sm text-gray-600" htmlFor="sort">Sort</label>
         <select
+          id="sort"
           value={sort}
           onChange={(e) => setSort(e.target.value as SortValue)}
           className="rounded-xl border px-3 py-2"
           aria-label="Sort venues"
         >
-          {SORT_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
+          {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </div>
 
-      {q && q.trim().length > 0 && q.trim().length < MIN_Q && (
-        <p className="text-xs text-gray-500">Type at least {MIN_Q} characters to search.</p>
-      )}
-
       {loading && <p>Loading venues…</p>}
       {error && <p className="text-red-600">{error}</p>}
-
-      {!loading && !error && venues.length === 0 && (
-        <p className="text-gray-600">No venues found. Try another search.</p>
+      {!loading && !error && visible.length === 0 && (
+        <p className="text-gray-600">No venues found.</p>
       )}
 
-      {!loading && !error && venues.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {venues.map(v => {
-            const img = v.media?.[0]?.url ?? 'https://picsum.photos/seed/holidaze/640/480'
-            const isMine = v.id === DEBUG_MY_VENUE_ID
-            return (
-              <article key={v.id} className="rounded-2xl overflow-hidden bg-white shadow border">
-                <div className="relative">
-                  <img src={img} alt={v.media?.[0]?.alt ?? v.name} className="h-48 w-full object-cover" />
-                  {isMine && (
-                    <span className="absolute top-2 left-2 rounded-md bg-black/70 text-white text-xs px-2 py-1">
-                      Your venue
-                    </span>
-                  )}
-                </div>
-                <div className="p-4 grid gap-2">
-                  <h3 className="font-semibold line-clamp-1">{v.name}</h3>
-                  {/* Debug: vis created for å bekrefte nyeste først */}
-                  <p className="text-xs text-gray-400">{new Date(v.created).toLocaleString()}</p>
-                  <p className="text-sm text-gray-600 line-clamp-2">{v.description}</p>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium">${v.price} /night</span>
-                    <Link className="rounded-lg border px-3 py-1" to={`/venues/${v.id}`}>View</Link>
-                  </div>
-                </div>
-              </article>
-            )
-          })}
-        </div>
+      {!loading && !error && visible.length > 0 && (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {visible.map(v => <VenueCard key={v.id} venue={v} />)}
+          </div>
+
+          {hasMore && (
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={onLoadMore}
+                className="rounded-xl border px-4 py-2"
+                aria-label="Load more venues"
+                disabled={loading}
+              >
+                {loading ? 'Loading…' : `Load more (${LIMIT})`}
+              </button>
+            </div>
+          )}
+        </>
       )}
     </section>
   )

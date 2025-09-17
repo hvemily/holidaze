@@ -1,97 +1,174 @@
 // src/pages/venues/VenueDetail.tsx
-import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { api } from '../../utils/api'
-import type { Venue, Booking } from '../../utils/types'
-import type { Media, VenueMedia } from '../../utils/types'
-type AnyMedia = Media | VenueMedia;
-import { useAuth } from '../../stores/auth'
+import { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { api } from '@/utils/api'
+import type { Venue, Booking } from '@/utils/types'
+import VenueCalendar from '@/components/VenueCalendar'
+
+type RouteParams = { id: string }
+type RangeValue = Date | [Date, Date] | null
+
+function nightsBetween(a?: Date, b?: Date) {
+  if (!a || !b) return 0
+  const d1 = new Date(a); d1.setHours(0,0,0,0)
+  const d2 = new Date(b); d2.setHours(0,0,0,0)
+  return Math.max(0, Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)))
+}
 
 export default function VenueDetail() {
-  const { id } = useParams()
+  const { id } = useParams<RouteParams>()
   const [venue, setVenue] = useState<Venue | null>(null)
-  const [nights, setNights] = useState(1)
-  const [active, setActive] = useState(0) // gallery index
-  const nav = useNavigate()
-  const { user } = useAuth()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // kalender / booking state (hooks alltid før ev. return)
+  const [range, setRange] = useState<RangeValue>(null)
+  const [guests, setGuests] = useState<number>(1)
+
+  // disse hooks må også være før evt. early return
+  const canReserve = useMemo(
+    () => Array.isArray(range) && !!range[0] && !!range[1],
+    [range]
+  )
+
+  // kan beregnes selv om venue er null
+  const nights = useMemo(
+    () => (Array.isArray(range) ? nightsBetween(range[0], range[1]) : 0),
+    [range]
+  )
+  const nightlyPrice = venue?.price ?? 0
+  const total = nights * nightlyPrice
 
   useEffect(() => {
-    (async () => {
-      const res = await api.get<{ data: Venue }>(`/holidaze/venues/${id}`)
-      setVenue(res.data)
-      setActive(0)
+    if (!id) return
+    let ignore = false
+    ;(async () => {
+      try {
+        setLoading(true); setError(null)
+        const res = await api.get<{ data: Venue }>(
+          `/holidaze/venues/${encodeURIComponent(id)}?_bookings=true`
+        )
+        if (!ignore) setVenue(res.data ?? null)
+      } catch (e: unknown) {
+        if (!ignore) setError(e instanceof Error ? e.message : 'Failed to load venue')
+      } finally {
+        if (!ignore) setLoading(false)
+      }
     })()
+    return () => { ignore = true }
   }, [id])
 
-  async function book() {
-    if (!user) return nav('/login', { replace: true })
-    const start = new Date()
-    const end = new Date(start.getTime() + nights * 24 * 60 * 60 * 1000)
-    const payload = { dateFrom: start.toISOString(), dateTo: end.toISOString(), guests: 1, venueId: id }
-    await api.post<{ data: Booking }>(`/holidaze/bookings`, payload)
-    alert('Booking created!')
+  async function handleReserve() {
+    if (!id || !Array.isArray(range) || !range[0] || !range[1]) return
+    try {
+      const from = new Date(range[0]); from.setHours(12, 0, 0, 0)
+      const to   = new Date(range[1]); to.setHours(10, 0, 0, 0)
+
+      await api.post<{ data: Booking }>('/holidaze/bookings', {
+        dateFrom: from.toISOString(),
+        dateTo: to.toISOString(),
+        guests,
+        venueId: id,
+      })
+
+      // refetch for å oppdatere kalender
+      const updated = await api.get<{ data: Venue }>(
+        `/holidaze/venues/${encodeURIComponent(id)}?_bookings=true&_=${Date.now()}`
+      )
+      setVenue(updated.data ?? null)
+      setRange(null)
+      alert('Booking requested!')
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Unable to create booking')
+    }
   }
 
-  if (!venue) return <p>Loading…</p>
-
-  const gallery = venue.media && venue.media.length ? venue.media : [{ url: 'https://picsum.photos/seed/holidaze/1280/720', alt: venue.name }]
-  const main = gallery[Math.min(active, gallery.length - 1)]
+  // UI
+  const gallery = venue?.media?.length
+    ? venue.media
+    : venue
+      ? [{ url: 'https://picsum.photos/seed/venue/800/500', alt: venue.name }]
+      : []
 
   return (
-    <section className="grid gap-6 lg:grid-cols-5">
-      {/* Gallery */}
-      <div className="lg:col-span-3 grid gap-3">
-        <div className="rounded-2xl overflow-hidden">
-          <img src={main.url} alt={main.alt ?? venue.name} className="w-full h-[360px] lg:h-[480px] object-cover" />
-        </div>
-        {gallery.length > 1 && (
-          <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-              {gallery.map((m: AnyMedia, i: number) => (
-              <button
-                key={i}
-                onClick={() => setActive(i)}
-                className={`rounded-xl overflow-hidden border ${i === active ? 'ring-2 ring-blue-600' : ''}`}
-              >
-                <img src={m.url} alt={m.alt ?? venue.name} className="w-full h-20 object-cover" />
-              </button>
-            ))}
+    <section className="grid gap-6">
+      {/* Loading / error / not found */}
+      {loading && <p>Loading venue…</p>}
+      {!loading && (error || !venue) && (
+        <p className="text-red-600">{error ?? 'Venue not found.'}</p>
+      )}
+
+      {/* Resten rendres bare når vi faktisk har venue */}
+      {!loading && venue && (
+        <>
+          {/* Header / bilder */}
+          <div className="grid gap-3">
+            {gallery[0] && (
+              <img
+                src={gallery[0].url}
+                alt={gallery[0].alt ?? venue.name}
+                className="w-full max-h-96 object-cover rounded-xl"
+              />
+            )}
+            {gallery.length > 1 && (
+              <div className="grid grid-cols-3 gap-2">
+                {gallery.slice(1, 4).map((m, i) => (
+                  <img key={i} src={m.url} alt={m.alt ?? venue.name} className="h-24 w-full object-cover rounded-lg" />
+                ))}
+              </div>
+            )}
+            <h1 className="text-2xl font-bold">{venue.name}</h1>
+            <p className="text-gray-700">{venue.description}</p>
+            <div className="text-sm text-gray-600">
+              {venue.location?.city ? `${venue.location.city}, ` : ''}
+              {venue.location?.country ?? ''}
+            </div>
+            <div className="font-medium text-lg">${nightlyPrice} /night</div>
           </div>
-        )}
-      </div>
 
-      {/* Details / booking */}
-      <div className="lg:col-span-2 grid gap-4">
-        <h1 className="text-3xl font-bold">{venue.name}</h1>
-        <div className="text-gray-700">{venue.description}</div>
+          {/* Kalender + booking */}
+          <div className="grid gap-3">
+            <h2 className="text-xl font-semibold">Availability</h2>
 
-        <div className="text-sm text-gray-600">
-          {venue.location?.city && <span>{venue.location.city}</span>}
-          {venue.location?.country && <span>{venue.location?.city ? ' · ' : ''}{venue.location.country}</span>}
-        </div>
+            <VenueCalendar
+              bookings={venue.bookings ?? []}
+              value={range}
+              onChange={setRange}
+              minDate={new Date()}
+            />
 
-        <div className="flex items-center gap-2">
-          <label htmlFor="nights" className="text-sm">Nights</label>
-          <input id="nights" type="number" min={1} value={nights}
-                 onChange={(e)=>setNights(parseInt(e.target.value||'1'))}
-                 className="w-24 rounded-lg border px-2 py-1" />
-          <button onClick={book} className="rounded-xl bg-blue-600 text-white px-4 py-2">Book</button>
-        </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="text-sm">
+                Guests:
+                <input
+                  type="number"
+                  min={1}
+                  value={guests}
+                  onChange={(e) => setGuests(Math.max(1, Number(e.target.value) || 1))}
+                  className="ml-2 w-20 rounded border px-2 py-1"
+                />
+              </label>
 
-        <div className="text-lg font-semibold">${venue.price} / night</div>
+              <button
+                className="rounded-lg bg-black text-white px-4 py-2 disabled:opacity-50"
+                onClick={handleReserve}
+                disabled={!canReserve}
+                title={!canReserve ? 'Select a date range' : 'Reserve'}
+              >
+                Reserve
+              </button>
 
-        <div className="text-sm text-gray-600">
-          Max guests: {venue.maxGuests ?? 1}
-        </div>
-
-        <div className="text-sm text-gray-600">
-          Amenities: {[
-            venue.meta?.wifi ? 'Wi-Fi' : null,
-            venue.meta?.parking ? 'Parking' : null,
-            venue.meta?.breakfast ? 'Breakfast' : null,
-            venue.meta?.pets ? 'Pets' : null,
-          ].filter(Boolean).join(' · ') || '—'}
-        </div>
-      </div>
+              {nights > 0 && (
+                <span className="text-sm text-gray-600">
+                  {Array.isArray(range) && range[0]?.toLocaleDateString()} →
+                  {Array.isArray(range) && range[1]?.toLocaleDateString()} · {nights}{' '}
+                  night{nights === 1 ? '' : 's'} · ${total}
+                </span>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </section>
   )
 }
