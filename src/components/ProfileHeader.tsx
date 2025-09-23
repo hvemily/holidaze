@@ -1,37 +1,64 @@
-// src/pages/profile/ProfileHeader.tsx
+// src/components/ProfileHeader.tsx
 import type { Profile as TProfile } from '@/utils/types'
 
-const FALLBACK_BANNER =
-  'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop'
-const FALLBACK_AVATAR = 'https://i.pravatar.cc/100?u=holidaze'
+const BANNER_URL =
+  'https://images.unsplash.com/photo-1723809887047-bc7a1b39bd5c?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'
 
 export default function ProfileHeader({ profile }: { profile: TProfile }) {
-  const bannerSrc = profile.banner?.url || FALLBACK_BANNER
-  const avatarSrc = profile.avatar?.url || FALLBACK_AVATAR
+  const avatarUrl =
+    profile.avatar?.url?.trim() && /^https?:\/\//i.test(profile.avatar.url)
+      ? profile.avatar.url
+      : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
+          profile.name
+        )}&backgroundType=gradientLinear`
 
   return (
-    <div className="relative">
-      <div className="h-40 w-full rounded-xl overflow-hidden">
+    <header className="relative overflow-hidden rounded-2xl border bg-white shadow-sm">
+      {/* Banner */}
+      <div className="relative h-52 sm:h-60 md:h-72 lg:h-80">
         <img
-          src={bannerSrc}
-          alt={profile.banner?.alt || `${profile.name}'s header`}
-          className="w-full h-full object-cover"
+          src={BANNER_URL}
+          alt="Profile banner"
+          className="absolute inset-0 h-full w-full object-cover"
+          fetchPriority="high"
         />
+        {/* lett mørkning for kontrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-black/5 to-transparent" />
+        {/* myk fade til hvitt nederst */}
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-b from-transparent via-white/80 to-white" />
       </div>
-      <div className="-mt-10 flex items-center gap-4 px-2">
-        <img
-          src={avatarSrc}
-          alt={profile.avatar?.alt || profile.name}
-          className="h-20 w-20 rounded-full object-cover border-4 border-white shadow"
-        />
-        <div>
-          <h1 className="text-2xl font-bold">{profile.name}</h1>
-          <div className="text-sm text-gray-600">{profile.email}</div>
-          <span className="inline-block mt-1 rounded-full border px-2 py-0.5 text-xs">
+
+      {/* Centered info */}
+      <div className="px-6 pb-12">
+        <div className="-mt-24 md:-mt-28 flex flex-col items-center text-center">
+          <img
+            src={avatarUrl}
+            alt={profile.avatar?.alt || `Initials avatar for ${profile.name}`}
+            className="relative z-10 h-32 w-32 md:h-36 md:w-36 rounded-full object-cover ring-4 ring-white shadow-md"
+          />
+
+          <h1 className="mt-4 text-2xl md:text-3xl font-extrabold tracking-tight">
+            {profile.name}
+          </h1>
+
+          {profile.email && (
+            <p className="mt-1 text-sm md:text-base text-gray-600">
+              {profile.email}
+            </p>
+          )}
+
+          <span
+            className={`mt-3 inline-block rounded-full border px-3 py-1 text-xs font-medium ${
+              profile.venueManager
+                ? 'border-indigo-300 text-indigo-700'
+                : 'border-gray-300 text-gray-600'
+            }`}
+            aria-label={profile.venueManager ? 'Venue Manager' : 'Customer'}
+          >
             {profile.venueManager ? 'Venue Manager' : 'Customer'}
           </span>
         </div>
       </div>
-    </div>
+    </header>
   )
 }

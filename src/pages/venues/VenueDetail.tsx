@@ -5,6 +5,8 @@ import { api } from '@/utils/api'
 import type { Venue, Booking } from '@/utils/types'
 import VenueCalendar from '@/components/VenueCalendar'
 import RatingStars from '@/components/RatingStars'
+import Spinner from '@/components/Spinner'
+import { useToast } from '@/components/Toast'
 
 type RouteParams = { id: string }
 type RangeValue = Date | [Date, Date] | null
@@ -21,6 +23,9 @@ export default function VenueDetail() {
   const [venue, setVenue] = useState<Venue | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [booking, setBooking] = useState(false)
+
+  const { error: toastError, success: toastSuccess } = useToast()
 
   // kalender / booking state
   const [range, setRange] = useState<RangeValue>(null)
@@ -51,21 +56,30 @@ export default function VenueDetail() {
         )
         if (!ignore) setVenue(res.data ?? null)
       } catch (e: unknown) {
-        if (!ignore) setError(e instanceof Error ? e.message : 'Failed to load venue')
+        const msg = e instanceof Error ? e.message : 'Failed to load venue'
+        if (!ignore) {
+          setError(msg)
+          toastError(msg)
+        }
       } finally {
         if (!ignore) setLoading(false)
       }
     })()
     return () => { ignore = true }
-  }, [id])
+  }, [id, toastError])
 
   async function handleReserve() {
-    if (!id || !Array.isArray(range) || !range[0] || !range[1]) return
+    if (!id || !Array.isArray(range) || !range[0] || !range[1]) {
+      toastError('Please select a date range.')
+      return
+    }
     if (guests > maxGuests) {
-      alert(`This venue allows up to ${maxGuests} guest${maxGuests === 1 ? '' : 's'}.`)
+      toastError(`This venue allows up to ${maxGuests} guest${maxGuests === 1 ? '' : 's'}.`)
       return
     }
     try {
+      setBooking(true)
+
       const from = new Date(range[0]); from.setHours(12, 0, 0, 0)
       const to   = new Date(range[1]); to.setHours(10, 0, 0, 0)
 
@@ -76,15 +90,18 @@ export default function VenueDetail() {
         venueId: id,
       })
 
-      // refetch for å oppdatere kalender
+      // refetch for å oppdatere kalenderblokker
       const updated = await api.get<{ data: Venue }>(
         `/holidaze/venues/${encodeURIComponent(id)}?_bookings=true&_=${Date.now()}`
       )
       setVenue(updated.data ?? null)
       setRange(null)
-      alert('Booking requested!')
+      toastSuccess('Booking requested!')
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Unable to create booking')
+      const msg = e instanceof Error ? e.message : 'Unable to create booking'
+      toastError(msg)
+    } finally {
+      setBooking(false)
     }
   }
 
@@ -98,7 +115,12 @@ export default function VenueDetail() {
 
   return (
     <section className="grid gap-6">
-      {loading && <p>Loading venue…</p>}
+      {loading && (
+        <div className="grid place-items-center py-16">
+          <Spinner />
+        </div>
+      )}
+
       {!loading && (error || !venue) && (
         <p className="text-red-600">{error ?? 'Venue not found.'}</p>
       )}
@@ -180,10 +202,11 @@ export default function VenueDetail() {
               <button
                 className="rounded-lg bg-black text-white px-4 py-2 disabled:opacity-50"
                 onClick={handleReserve}
-                disabled={!canReserve}
+                disabled={!canReserve || booking}
+                aria-busy={booking}
                 title={!canReserve ? 'Select a date range' : 'Reserve'}
               >
-                Book now
+                {booking ? 'Booking…' : 'Book now'}
               </button>
 
               {nights > 0 && (

@@ -10,59 +10,72 @@ import Protected from './components/Protected'
 import ManagerDashboard from './pages/manager/ManagerDashboard'
 import ManagerCreateVenue from './pages/manager/ManagerCreateVenue'
 import ManagerEditVenue from './pages/manager/ManagerEditVenueList'
+import ManagerVenueBookings from './pages/manager/ManagerVenueBookings'
+import { ToastProvider } from './components/Toast'
 
 export default function App() {
   return (
-    <Layout>
-      <Routes>
-        {/* Home peker direkte til Venues */}
-        <Route path="/" element={<Venues />} />
+    <ToastProvider>
+      <Layout>
+        <Routes>
+          {/* Home peker direkte til Venues */}
+          <Route path="/" element={<Venues />} />
 
-        <Route path="/venues" element={<Venues />} />
-        <Route path="/venues/:id" element={<VenueDetail />} />
+          <Route path="/venues" element={<Venues />} />
+          <Route path="/venues/:id" element={<VenueDetail />} />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        <Route
-          path="/profile/:name"
-          element={
-            <Protected>
-              <Profile />
-            </Protected>
-          }
-        />
+          <Route
+            path="/profile/:name"
+            element={
+              <Protected>
+                <Profile />
+              </Protected>
+            }
+          />
 
-        <Route
-          path="/manager"
-          element={
-            <Protected requireManager>
-              <ManagerDashboard />
-            </Protected>
-          }
-        />
+          <Route
+            path="/manager"
+            element={
+              <Protected requireManager>
+                <ManagerDashboard />
+              </Protected>
+            }
+          />
 
-        <Route
-          path="/manager/venues/new"
-          element={
-            <Protected requireManager>
-              <ManagerCreateVenue />
-            </Protected>
-          }
-        />
+          <Route
+            path="/manager/venues/new"
+            element={
+              <Protected requireManager>
+                <ManagerCreateVenue />
+              </Protected>
+            }
+          />
 
-        <Route
-          path="/manager/venues/:id/edit"
-          element={
-            <Protected requireManager>
-              <ManagerEditVenue />
-            </Protected>
-          }
-        />
+          <Route
+            path="/manager/venues/:id/edit"
+            element={
+              <Protected requireManager>
+                <ManagerEditVenue />
+              </Protected>
+            }
+          />
 
-        {/* 404 → venues */}
-        <Route path="*" element={<Navigate to="/venues" replace />} />
-      </Routes>
-    </Layout>
+          <Route
+            path="/manager/venues/:id/bookings"
+            element={
+              <Protected requireManager>
+                <ManagerVenueBookings />
+              </Protected>
+            }
+          />
+
+          {/* 404 → venues */}
+          <Route path="*" element={<Navigate to="/venues" replace />} />
+        </Routes>
+      </Layout>
+    </ToastProvider>
   )
 }

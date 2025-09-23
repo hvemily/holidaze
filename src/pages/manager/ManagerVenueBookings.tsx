@@ -1,7 +1,10 @@
+// src/pages/manager/ManagerVenueBookings.tsx
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { api } from '../../utils/api'
-import type { Booking, Venue } from '../../utils/types'
+import { api } from '@/utils/api'
+import type { Booking, Venue } from '@/utils/types'
+import Spinner from '@/components/Spinner'
+import { useToast } from '@/components/Toast'
 
 export default function ManagerVenueBookings() {
   const { id } = useParams<{ id: string }>()
@@ -9,16 +12,24 @@ export default function ManagerVenueBookings() {
   const [bookings, setBookings] = useState<Booking[]>([])
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
+  const { error: toastError } = useToast()
 
   useEffect(() => {
     let ignore = false
     ;(async () => {
       try {
         setLoading(true)
-        const v = await api.get<{ data: Venue }>(`/holidaze/venues/${id}`)
-        const b = await api.get<{ data: Booking[] }>(
-          `/holidaze/venues/${id}/bookings?upcoming=true&_owner=true`
+        setErr(null)
+
+        const v = await api.get<{ data: Venue }>(
+          `/holidaze/venues/${encodeURIComponent(id!)}`
         )
+        const b = await api.get<{ data: Booking[] }>(
+          `/holidaze/venues/${encodeURIComponent(
+            id!
+          )}/bookings?upcoming=true&_owner=true`
+        )
+
         if (!ignore) {
           setVenue(v.data)
           setBookings(b.data || [])
@@ -28,6 +39,7 @@ export default function ManagerVenueBookings() {
           const message =
             e instanceof Error ? e.message : 'Failed to load bookings'
           setErr(message)
+          toastError(message)
         }
       } finally {
         if (!ignore) setLoading(false)
@@ -36,9 +48,16 @@ export default function ManagerVenueBookings() {
     return () => {
       ignore = true
     }
-  }, [id])
+  }, [id, toastError])
 
-  if (loading) return <p>Loading…</p>
+  if (loading) {
+    return (
+      <section className="grid place-items-center py-16">
+        <Spinner />
+      </section>
+    )
+  }
+
   if (err) return <p className="text-red-600">{err}</p>
 
   return (
