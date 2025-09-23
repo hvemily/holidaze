@@ -57,7 +57,6 @@ export default function Venues() {
         setPage(1)
         setHasMore(true)
         setIdHit(false)
-        // Nullstill availability-cache når base-listen endres vesentlig
         setBookingsByVenue({})
 
         abortRef.current?.abort()
@@ -224,7 +223,7 @@ export default function Venues() {
     <>
       <Hero />
 
-      <section id="venues-list" className="grid gap-6 max-w-6xl mx-auto px-4 py-8">
+      <section id="venues-list" className="grid gap-6 max-w-7xl mx-auto px-4 py-8">
         <VenueFilters
           q={q}
           onQChange={setQ}
@@ -272,7 +271,7 @@ export default function Venues() {
         {/* Liste */}
         {visible.length > 0 && (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
               {visible.map(v => <VenueCard key={v.id} venue={v} />)}
             </div>
 
@@ -285,7 +284,7 @@ export default function Venues() {
                   aria-label="Load more venues"
                   disabled={loading}
                 >
-                  {loading ? 'Loading…' : `Load more (${LIMIT})`}
+                  {loading ? 'Loading…' : 'Load more'}
                 </button>
 
                 {(loading || loadingAvail) && <Spinner />}
