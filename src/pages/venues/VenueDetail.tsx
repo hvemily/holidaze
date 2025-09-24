@@ -1,3 +1,4 @@
+// src/pages/venues/VenueDetail.tsx
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { api } from '@/utils/api'
@@ -7,11 +8,9 @@ import RatingStars from '@/components/RatingStars'
 import Spinner from '@/components/Spinner'
 import { useToast } from '@/components/Toast'
 import Modal from '@/components/Modal'
-import { useAuth } from '@/stores/auth'
 
 type RouteParams = { id: string }
 type RangeValue = Date | [Date, Date] | null
-type BookingEx = Booking & { customer?: { name?: string } }
 
 function nightsBetween(a?: Date, b?: Date) {
   if (!a || !b) return 0
@@ -22,7 +21,6 @@ function nightsBetween(a?: Date, b?: Date) {
 
 export default function VenueDetail() {
   const { id } = useParams<RouteParams>()
-  const { user } = useAuth()
   const [venue, setVenue] = useState<Venue | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -30,10 +28,14 @@ export default function VenueDetail() {
 
   const { error: toastError, success: toastSuccess } = useToast()
 
+  // gallery-state
   const [activeIdx, setActiveIdx] = useState(0)
+
+  // calendar / booking state
   const [range, setRange] = useState<RangeValue>(null)
   const [guests, setGuests] = useState<number>(1)
 
+  // modal
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const canReserve = useMemo(
@@ -56,7 +58,6 @@ export default function VenueDetail() {
     ;(async () => {
       try {
         setLoading(true); setError(null)
-        // Hvis API støtter det, kan du legge til &_customer=true
         const res = await api.get<{ data: Venue }>(
           `/holidaze/venues/${encodeURIComponent(id)}?_bookings=true`
         )
@@ -93,7 +94,6 @@ export default function VenueDetail() {
     if (!id || !Array.isArray(range) || !range[0] || !range[1]) return
     try {
       setBooking(true)
-
       const from = new Date(range[0]); from.setHours(12, 0, 0, 0)
       const to   = new Date(range[1]); to.setHours(10, 0, 0, 0)
 
@@ -127,18 +127,12 @@ export default function VenueDetail() {
 
   const mainImg = gallery[activeIdx]
 
-  const isOwner = !!(user?.name && venue?.owner?.name && user.name === venue.owner.name)
-  const today0 = new Date(); today0.setHours(0,0,0,0)
-  const upcomingBookings = ((venue?.bookings as BookingEx[]) ?? [])
-    .filter(b => new Date(b.dateTo) >= today0)
-    .sort((a, b) => new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime())
-
   const fmt: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
   const startStr = Array.isArray(range) && range[0] ? range[0].toLocaleDateString(undefined, fmt) : ''
   const endStr   = Array.isArray(range) && range[1] ? range[1].toLocaleDateString(undefined, fmt) : ''
 
   return (
-    <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <section className="py-6 sm:py-8">
       {loading && (
         <div className="grid place-items-center py-16">
           <Spinner />
@@ -151,36 +145,35 @@ export default function VenueDetail() {
 
       {!loading && venue && (
         <>
-          {/* Hero */}
+          {/* Hero – faste høyder pr breakpoint så ingenting flyter ut på mobil */}
           {mainImg && (
-            <div className="relative rounded-2xl overflow-hidden shadow border">
+            <div className="relative overflow-hidden rounded-2xl shadow border">
               <img
                 src={mainImg.url}
                 alt={mainImg.alt ?? venue.name}
-                className="w-full max-h-[520px] object-cover"
+                className="w-full h-48 sm:h-64 md:h-80 lg:h-[520px] object-cover"
               />
-
-              <div className="absolute right-4 top-4 rounded-full bg-white/85 backdrop-blur px-3 py-1">
+              <div className="absolute right-3 top-3 sm:right-4 sm:top-4 rounded-full bg-white/85 backdrop-blur px-2.5 py-1">
                 <RatingStars value={Number(venue.rating) || 0} size="md" showNumber />
               </div>
             </div>
           )}
 
-          {/* Thumbs */}
+          {/* Thumbnails – grid (ikke hor. scroll) for å unngå overflow */}
           {gallery.length > 1 && (
-            <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
               {gallery.slice(0, 6).map((m, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => setActiveIdx(i)}
-                  className={`rounded-xl border overflow-hidden shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 ${i === activeIdx ? 'ring-2 ring-blue-500' : ''}`}
+                  className={`rounded-xl border overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 ${i === activeIdx ? 'ring-2 ring-blue-500' : ''}`}
                   aria-label={`Show image ${i + 1}`}
                 >
                   <img
                     src={m.url}
                     alt={m.alt ?? venue.name}
-                    className="h-28 w-44 object-cover"
+                    className="w-full aspect-[4/3] object-cover"
                     loading="lazy"
                   />
                 </button>
@@ -188,12 +181,12 @@ export default function VenueDetail() {
             </div>
           )}
 
-          {/* 2-kol layout */}
-          <div className="mt-8 grid gap-8 md:grid-cols-[1fr,380px]">
+          {/* 2-kolonne – stack på mobil */}
+          <div className="mt-6 sm:mt-8 grid gap-6 md:grid-cols-[1fr,360px] lg:grid-cols-[1fr,380px]">
             {/* Venstre kolonne */}
             <div className="grid gap-5">
               <div>
-                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                   {venue.name}
                 </h1>
                 <p className="mt-1 text-gray-600">
@@ -206,7 +199,6 @@ export default function VenueDetail() {
                 <p className="text-gray-700 leading-relaxed">{venue.description}</p>
               )}
 
-              {/* Amenities */}
               <div>
                 <h3 className="font-semibold mb-2">Features & Amenities</h3>
                 <ul className="grid gap-1 text-gray-700">
@@ -222,17 +214,17 @@ export default function VenueDetail() {
               </div>
 
               <div className="font-semibold text-lg">
-                ${venue.price ?? 0} <span className="font-normal text-gray-600">/night</span>
+                ${nightlyPrice} <span className="font-normal text-gray-600">/night</span>
               </div>
             </div>
 
-            {/* Høyre kolonne – booking-kort */}
+            {/* Høyre kolonne – booking */}
             <aside className="md:sticky md:top-20 self-start">
               <div className="rounded-2xl border bg-white shadow p-4">
                 <h2 className="text-lg font-semibold mb-3">Availability</h2>
 
                 <VenueCalendar
-                  bookings={(venue.bookings as BookingEx[]) ?? []}
+                  bookings={venue.bookings ?? []}
                   value={range}
                   onChange={setRange}
                   minDate={new Date()}
@@ -259,7 +251,6 @@ export default function VenueDetail() {
                   </span>
                 </div>
 
-                {/* Prisoppsummering */}
                 <div className="mt-3 rounded-lg bg-gray-50 border p-3 text-sm">
                   <div className="flex justify-between">
                     <span>{nights || 0} night{nights === 1 ? '' : 's'} × ${nightlyPrice}</span>
@@ -279,39 +270,6 @@ export default function VenueDetail() {
               </div>
             </aside>
           </div>
-
-          {/* Owner-only: Upcoming bookings for this venue */}
-          {isOwner && (
-            <section className="mt-10">
-              <h2 className="text-xl font-semibold mb-3">Upcoming bookings (owner view)</h2>
-              {upcomingBookings.length === 0 ? (
-                <p className="text-gray-600 text-sm">No upcoming bookings yet.</p>
-              ) : (
-                <ul className="divide-y divide-gray-200 rounded-xl border bg-white">
-                  {upcomingBookings.map(b => {
-                    const d1 = new Date(b.dateFrom)
-                    const d2 = new Date(b.dateTo)
-                    return (
-                      <li key={b.id} className="p-3 flex items-center justify-between gap-4">
-                        <div className="min-w-0">
-                          <p className="font-medium truncate">
-                            {d1.toLocaleDateString(undefined, fmt)} → {d2.toLocaleDateString(undefined, fmt)}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {b.guests} guest{(b.guests||1) === 1 ? '' : 's'}
-                            {(b as BookingEx).customer?.name ? <> · {(b as BookingEx).customer!.name}</> : null}
-                          </p>
-                        </div>
-                        <span className="shrink-0 text-xs rounded-full border px-2 py-1 bg-gray-50">
-                          {nightsBetween(d1, d2)} night{nightsBetween(d1, d2) === 1 ? '' : 's'}
-                        </span>
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
-            </section>
-          )}
 
           {/* Bekreftelses-modal */}
           <Modal
@@ -334,21 +292,10 @@ export default function VenueDetail() {
               )}
 
               <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={() => setConfirmOpen(false)}
-                  disabled={booking}
-                >
+                <button type="button" className="btn" onClick={() => setConfirmOpen(false)} disabled={booking}>
                   Cancel
                 </button>
-                <button
-                  type="button"
-                  className="btn-solid"
-                  onClick={confirmReserve}
-                  disabled={booking}
-                  aria-busy={booking}
-                >
+                <button type="button" className="btn-solid" onClick={confirmReserve} disabled={booking} aria-busy={booking}>
                   {booking ? 'Booking…' : 'Confirm'}
                 </button>
               </div>

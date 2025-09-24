@@ -48,138 +48,153 @@ export default function Layout({ children }: PropsWithChildren) {
     setMobileOpen(false)
   }, [location.pathname])
 
-  // Click outside / ESC to close
-  const menuRef = useRef<HTMLDivElement | null>(null)
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => {
+        document.body.style.overflow = prev
+      }
+    }
+  }, [mobileOpen])
+
+  // Click outside/ESC to close (for desktop only; on mobile vi bruker backdrop)
+  const panelRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     if (!mobileOpen) return
-    const onDown = (e: MouseEvent) => {
-      if (!menuRef.current) return
-      if (!menuRef.current.contains(e.target as Node)) setMobileOpen(false)
-    }
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setMobileOpen(false)
     }
-    document.addEventListener('mousedown', onDown)
     document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDown)
-      document.removeEventListener('keydown', onKey)
-    }
+    return () => document.removeEventListener('keydown', onKey)
   }, [mobileOpen])
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-header sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <Link to="/" className="font-extrabold text-xl tracking-wide text-nav">
-            HOLIDAZE
-          </Link>
+      <header className="bg-header sticky top-0 z-50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-3 flex items-center justify-between">
+            <Link to="/" className="font-extrabold text-xl tracking-wide text-nav">
+              HOLIDAZE
+            </Link>
 
-          <nav className="relative flex items-center gap-4 text-sm">
-            {!user ? (
-              <>
-                {/* Mobile hamburger */}
-                {!onAuthPage && (
-                  <button
-                    type="button"
-                    aria-label="Open menu"
-                    aria-expanded={mobileOpen}
-                    aria-controls="mobile-auth-menu"
-                    onClick={() => setMobileOpen(o => !o)}
-                    className="md:hidden rounded-xl border border-white/50 bg-white/50 px-3 py-1 text-nav"
-                  >
-                    <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
-                      <rect x="3" y="6" width="18" height="2" rx="1" />
-                      <rect x="3" y="11" width="18" height="2" rx="1" />
-                      <rect x="3" y="16" width="18" height="2" rx="1" />
-                    </svg>
-                  </button>
-                )}
-
-                {/* Desktop links */}
-                {!onAuthPage && (
-                  <>
-                    <NavLink
-                      to="/register?role=manager"
-                      className="text-nav hover:underline hidden md:inline"
+            <nav className="flex items-center gap-4 text-sm">
+              {!user ? (
+                <>
+                  {/* Mobile hamburger */}
+                  {!onAuthPage && (
+                    <button
+                      type="button"
+                      aria-label="Open menu"
+                      aria-expanded={mobileOpen}
+                      aria-controls="mobile-auth-menu"
+                      onClick={() => setMobileOpen(o => !o)}
+                      className="md:hidden rounded-xl border border-white/60 bg-white/70 px-3 py-2 text-nav shadow-sm"
                     >
-                      Become a host
-                    </NavLink>
-                    <NavLink
-                      to="/register?role=guest"
-                      className="text-nav hover:underline hidden md:inline"
-                    >
-                      Register as guest
-                    </NavLink>
-                    <NavLink to="/login" className="btn hidden md:inline">
-                      Login
-                    </NavLink>
-                  </>
-                )}
+                      <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                        <rect x="3" y="6" width="18" height="2" rx="1" />
+                        <rect x="3" y="11" width="18" height="2" rx="1" />
+                        <rect x="3" y="16" width="18" height="2" rx="1" />
+                      </svg>
+                    </button>
+                  )}
 
-                {/* Mobile dropdown */}
-                {mobileOpen && !onAuthPage && (
-                  <div
-                    id="mobile-auth-menu"
-                    ref={menuRef}
-                    role="menu"
-                    className="absolute right-0 top-10 w-56 origin-top-right rounded-2xl border bg-white shadow-card overflow-hidden md:hidden"
-                  >
-                    <div className="p-2 grid gap-2">
-                      <NavLink
-                        to="/login"
-                        className="btn-solid w-full text-center"
-                        role="menuitem"
-                      >
-                        Login
-                      </NavLink>
-                      <NavLink
-                        to="/register?role=guest"
-                        className="btn w-full text-center"
-                        role="menuitem"
-                      >
-                        Register as guest
-                      </NavLink>
+                  {/* Desktop links */}
+                  {!onAuthPage && (
+                    <>
                       <NavLink
                         to="/register?role=manager"
-                        className="btn w-full text-center"
-                        role="menuitem"
+                        className="text-nav hover:underline hidden md:inline"
                       >
                         Become a host
                       </NavLink>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                {/* Desktop nav for innlogget */}
-                <NavLink
-                  to="/"
-                  end
-                  className={({ isActive }) =>
-                    `${isActive ? 'font-semibold' : ''} text-nav hover:underline hidden md:inline`
-                  }
-                >
-                  Home
-                </NavLink>
-                <NavLink
-                  to="/venues"
-                  className={({ isActive }) =>
-                    `${isActive ? 'font-semibold' : ''} text-nav hover:underline hidden md:inline`
-                  }
-                >
-                  Venues
-                </NavLink>
+                      <NavLink
+                        to="/register?role=guest"
+                        className="text-nav hover:underline hidden md:inline"
+                      >
+                        Register as guest
+                      </NavLink>
+                      <NavLink to="/login" className="btn hidden md:inline">
+                        Login
+                      </NavLink>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Desktop nav for innlogget */}
+                  <NavLink
+                    to="/"
+                    end
+                    className={({ isActive }) =>
+                      `${isActive ? 'font-semibold' : ''} text-nav hover:underline hidden md:inline`
+                    }
+                  >
+                    Home
+                  </NavLink>
+                  <NavLink
+                    to="/venues"
+                    className={({ isActive }) =>
+                      `${isActive ? 'font-semibold' : ''} text-nav hover:underline hidden md:inline`
+                    }
+                  >
+                    Venues
+                  </NavLink>
 
-                <UserMenu user={user} onLogoutClick={() => setOpenLogoutConfirm(true)} />
-              </>
-            )}
-          </nav>
+                  <UserMenu user={user} onLogoutClick={() => setOpenLogoutConfirm(true)} />
+                </>
+              )}
+            </nav>
+          </div>
+
+          {/* Mobile slide-down panel (full width, under header) */}
+          {!user && mobileOpen && !onAuthPage && (
+            <>
+              {/* Backdrop */}
+              <div
+                className="fixed inset-0 bg-black/30 md:hidden"
+                onClick={() => setMobileOpen(false)}
+                aria-hidden="true"
+              />
+              {/* Panel */}
+              <div
+                id="mobile-auth-menu"
+                ref={panelRef}
+                role="menu"
+                className="md:hidden absolute left-0 right-0 top-full bg-white border-y shadow-card overflow-hidden"
+              >
+                <div className="px-4 py-4 space-y-3">
+                  <NavLink
+                    to="/login"
+                    className="btn-solid block w-full text-center py-2"
+                    role="menuitem"
+                  >
+                    Login
+                  </NavLink>
+                  <NavLink
+                    to="/register?role=guest"
+                    className="btn block w-full text-center py-2"
+                    role="menuitem"
+                  >
+                    Register as guest
+                  </NavLink>
+                  <NavLink
+                    to="/register?role=manager"
+                    className="btn block w-full text-center py-2"
+                    role="menuitem"
+                  >
+                    Become a host
+                  </NavLink>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </header>
 
+      {/* Main content */}
       <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
         {children}
       </main>

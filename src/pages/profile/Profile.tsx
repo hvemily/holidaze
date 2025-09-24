@@ -156,39 +156,41 @@ export default function Profile() {
     : []
 
   return (
-    <section className="grid gap-6 max-w-5xl mx-auto">
+    <section className="py-6 sm:py-8 grid gap-6">
       {/* Header med banner + avatar */}
       <ProfileHeader profile={profile} />
 
-      {/* Handlinger under header */}
-      <div className="flex justify-center gap-3 -mt-2">
-        {isSelf && (
-          <button
-            type="button"
-            className="btn-solid rounded-full"
-            onClick={() => setOpenEditProfile(true)}
-          >
-            Edit profile
-          </button>
-        )}
-        {isSelf && profile.venueManager && (
-          <button
-            type="button"
-            className="btn rounded-full"
-            onClick={() => setOpenCreate(true)}
-          >
-            New venue
-          </button>
-        )}
+      {/* Handlinger under header – grid på mobil, inline fra sm */}
+      <div className="flex justify-center">
+        <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-flex sm:gap-3">
+          {isSelf && (
+            <button
+              type="button"
+              className="btn-solid rounded-full w-full sm:w-auto"
+              onClick={() => setOpenEditProfile(true)}
+            >
+              Edit profile
+            </button>
+          )}
+          {isSelf && profile.venueManager && (
+            <button
+              type="button"
+              className="btn rounded-full w-full sm:w-auto"
+              onClick={() => setOpenCreate(true)}
+            >
+              New venue
+            </button>
+          )}
+        </div>
       </div>
 
       {/* To kort: My venues + Bookings */}
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border bg-white shadow-sm">
-          <div className="px-5 py-4 border-b">
-            <h2 className="text-lg font-semibold">My venues</h2>
+        <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+          <div className="px-4 sm:px-5 py-3 sm:py-4 border-b">
+            <h2 className="text-base sm:text-lg font-semibold">My venues</h2>
           </div>
-          <div className="p-4">
+          <div className="p-3 sm:p-4">
             {profile.venueManager ? (
               <ProfileVenuesList
                 venues={venues}
@@ -203,11 +205,11 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="rounded-2xl border bg-white shadow-sm">
-          <div className="px-5 py-4 border-b">
-            <h2 className="text-lg font-semibold">Upcoming bookings</h2>
+        <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+          <div className="px-4 sm:px-5 py-3 sm:py-4 border-b">
+            <h2 className="text-base sm:text-lg font-semibold">Upcoming bookings</h2>
           </div>
-          <div className="p-4">
+          <div className="p-3 sm:p-4">
             {profile.venueManager && isSelf ? (
               upcomingAcrossVenues.length ? (
                 <ul className="divide-y">
