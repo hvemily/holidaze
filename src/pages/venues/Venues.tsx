@@ -1,11 +1,13 @@
 // src/pages/venues/Venues.tsx
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import type { Venue, Booking } from '@/utils/types'
 import Hero from '@/components/Hero'
 import VenueCard from '@/components/VenueCard'
 import VenueFilters from '@/components/VenueFilters'
 import Spinner from '@/components/Spinner'
 import { useToast } from '@/components/Toast'
+import Skeleton from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
 import {
   LIMIT,
   SORT_OPTIONS,
@@ -199,13 +201,13 @@ export default function Venues() {
     return () => { cancelled = true }
   }, [checkIn, checkOut, items, bookingsByVenue, toastError])
 
-  // ------- Tilgjengelighets-sjekk -------
-  function isAvailable(v: Venue): boolean {
+  // ------- Tilgjengelighets-sjekk (memoisert) -------
+  const isAvailable = useCallback((v: Venue): boolean => {
     if (!checkIn || !checkOut) return true
     const list = bookingsByVenue[v.id]
     if (!list) return true
     return !list.some(b => rangesOverlap(checkIn, checkOut, b.dateFrom, b.dateTo))
-  }
+  }, [checkIn, checkOut, bookingsByVenue])
 
   // ------- Synlige kort -------
   const visible = useMemo(() => {
@@ -217,7 +219,7 @@ export default function Venues() {
       (!guests || (Number(v.maxGuests) || 1) >= guests) &&
       isAvailable(v)
     )
-  }, [items, debouncedQ, idHit, guests, checkIn, checkOut, bookingsByVenue])
+  }, [items, debouncedQ, idHit, guests, isAvailable])
 
   return (
     <>
@@ -268,6 +270,22 @@ export default function Venues() {
           <p className="text-gray-600">No venues found.</p>
         )}
 
+        {/* Skeletons */}
+        {loading && !error && items.length === 0 && (
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="rounded-2xl overflow-hidden bg-white shadow border p-4">
+                <Skeleton height={140} />
+                <div className="mt-3 space-y-2">
+                  <Skeleton height={20} width="70%" />
+                  <Skeleton height={15} width="50%" />
+                  <Skeleton height={30} width="60%" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Liste */}
         {visible.length > 0 && (
           <>
@@ -280,7 +298,7 @@ export default function Venues() {
                 <button
                   type="button"
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); onLoadMore() }}
-                  className="rounded-xl border px-4 py-2"
+                  className="btn"
                   aria-label="Load more venues"
                   disabled={loading}
                 >

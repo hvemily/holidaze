@@ -1,4 +1,3 @@
-// src/pages/venues/VenueDetail.tsx
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { api } from '@/utils/api'
@@ -7,9 +6,12 @@ import VenueCalendar from '@/components/VenueCalendar'
 import RatingStars from '@/components/RatingStars'
 import Spinner from '@/components/Spinner'
 import { useToast } from '@/components/Toast'
+import Modal from '@/components/Modal'
+import { useAuth } from '@/stores/auth'
 
 type RouteParams = { id: string }
 type RangeValue = Date | [Date, Date] | null
+type BookingEx = Booking & { customer?: { name?: string } }
 
 function nightsBetween(a?: Date, b?: Date) {
   if (!a || !b) return 0
@@ -20,6 +22,7 @@ function nightsBetween(a?: Date, b?: Date) {
 
 export default function VenueDetail() {
   const { id } = useParams<RouteParams>()
+  const { user } = useAuth()
   const [venue, setVenue] = useState<Venue | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -27,9 +30,11 @@ export default function VenueDetail() {
 
   const { error: toastError, success: toastSuccess } = useToast()
 
-  // kalender / booking state
+  const [activeIdx, setActiveIdx] = useState(0)
   const [range, setRange] = useState<RangeValue>(null)
   const [guests, setGuests] = useState<number>(1)
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const canReserve = useMemo(
     () => Array.isArray(range) && !!range[0] && !!range[1],
@@ -51,10 +56,14 @@ export default function VenueDetail() {
     ;(async () => {
       try {
         setLoading(true); setError(null)
+        // Hvis API støtter det, kan du legge til &_customer=true
         const res = await api.get<{ data: Venue }>(
           `/holidaze/venues/${encodeURIComponent(id)}?_bookings=true`
         )
-        if (!ignore) setVenue(res.data ?? null)
+        if (!ignore) {
+          setVenue(res.data ?? null)
+          setActiveIdx(0)
+        }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'Failed to load venue'
         if (!ignore) {
@@ -68,8 +77,8 @@ export default function VenueDetail() {
     return () => { ignore = true }
   }, [id, toastError])
 
-  async function handleReserve() {
-    if (!id || !Array.isArray(range) || !range[0] || !range[1]) {
+  function handleReserve() {
+    if (!Array.isArray(range) || !range[0] || !range[1]) {
       toastError('Please select a date range.')
       return
     }
@@ -77,6 +86,11 @@ export default function VenueDetail() {
       toastError(`This venue allows up to ${maxGuests} guest${maxGuests === 1 ? '' : 's'}.`)
       return
     }
+    setConfirmOpen(true)
+  }
+
+  async function confirmReserve() {
+    if (!id || !Array.isArray(range) || !range[0] || !range[1]) return
     try {
       setBooking(true)
 
@@ -90,13 +104,13 @@ export default function VenueDetail() {
         venueId: id,
       })
 
-      // refetch for å oppdatere kalenderblokker
       const updated = await api.get<{ data: Venue }>(
         `/holidaze/venues/${encodeURIComponent(id)}?_bookings=true&_=${Date.now()}`
       )
       setVenue(updated.data ?? null)
       setRange(null)
-      toastSuccess('Booking requested!')
+      toastSuccess('Booked successfully!')
+      setConfirmOpen(false)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Unable to create booking'
       toastError(msg)
@@ -108,13 +122,23 @@ export default function VenueDetail() {
   const gallery = venue?.media?.length
     ? venue.media
     : venue
-      ? [{ url: 'https://picsum.photos/seed/venue/800/500', alt: venue.name }]
+      ? [{ url: 'https://picsum.photos/seed/venue/1200/800', alt: venue.name }]
       : []
 
-  const amenities = venue?.meta ?? {}
+  const mainImg = gallery[activeIdx]
+
+  const isOwner = !!(user?.name && venue?.owner?.name && user.name === venue.owner.name)
+  const today0 = new Date(); today0.setHours(0,0,0,0)
+  const upcomingBookings = ((venue?.bookings as BookingEx[]) ?? [])
+    .filter(b => new Date(b.dateTo) >= today0)
+    .sort((a, b) => new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime())
+
+  const fmt: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
+  const startStr = Array.isArray(range) && range[0] ? range[0].toLocaleDateString(undefined, fmt) : ''
+  const endStr   = Array.isArray(range) && range[1] ? range[1].toLocaleDateString(undefined, fmt) : ''
 
   return (
-    <section className="grid gap-6">
+    <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {loading && (
         <div className="grid place-items-center py-16">
           <Spinner />
@@ -127,97 +151,209 @@ export default function VenueDetail() {
 
       {!loading && venue && (
         <>
-          {/* Header / bilder */}
-          <div className="grid gap-3">
-            {gallery[0] && (
+          {/* Hero */}
+          {mainImg && (
+            <div className="relative rounded-2xl overflow-hidden shadow border">
               <img
-                src={gallery[0].url}
-                alt={gallery[0].alt ?? venue.name}
-                className="w-full max-h-96 object-cover rounded-xl"
+                src={mainImg.url}
+                alt={mainImg.alt ?? venue.name}
+                className="w-full max-h-[520px] object-cover"
               />
-            )}
-            {gallery.length > 1 && (
-              <div className="grid grid-cols-3 gap-2">
-                {gallery.slice(1, 4).map((m, i) => (
-                  <img key={i} src={m.url} alt={m.alt ?? venue.name} className="h-24 w-full object-cover rounded-lg" />
-                ))}
+
+              <div className="absolute right-4 top-4 rounded-full bg-white/85 backdrop-blur px-3 py-1">
+                <RatingStars value={Number(venue.rating) || 0} size="md" showNumber />
               </div>
-            )}
-
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold">{venue.name}</h1>
-              <RatingStars value={Number(venue.rating) || 0} size="md" showNumber />
             </div>
+          )}
 
-            <div className="text-sm text-gray-600">
-              {venue.location?.city ? `${venue.location.city}, ` : ''}
-              {venue.location?.country ?? ''}
+          {/* Thumbs */}
+          {gallery.length > 1 && (
+            <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+              {gallery.slice(0, 6).map((m, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActiveIdx(i)}
+                  className={`rounded-xl border overflow-hidden shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500 ${i === activeIdx ? 'ring-2 ring-blue-500' : ''}`}
+                  aria-label={`Show image ${i + 1}`}
+                >
+                  <img
+                    src={m.url}
+                    alt={m.alt ?? venue.name}
+                    className="h-28 w-44 object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
             </div>
+          )}
 
-            {/* Amenities */}
-            <div className="mt-1 text-sm text-gray-700">
-              <h3 className="font-semibold mb-1">Features & Amenities</h3>
-              <ul className="grid gap-1">
-                {amenities?.wifi && <li>✅ Wifi</li>}
-                {amenities?.breakfast && <li>✅ Breakfast included</li>}
-                {amenities?.parking && <li>✅ Parking</li>}
-                {amenities?.pets && <li>✅ Pets</li>}
-                {!amenities?.wifi && !amenities?.breakfast && !amenities?.parking && !amenities?.pets && (
-                  <li className="text-gray-500">No amenities listed.</li>
-                )}
-              </ul>
-            </div>
+          {/* 2-kol layout */}
+          <div className="mt-8 grid gap-8 md:grid-cols-[1fr,380px]">
+            {/* Venstre kolonne */}
+            <div className="grid gap-5">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                  {venue.name}
+                </h1>
+                <p className="mt-1 text-gray-600">
+                  {venue.location?.city ? `${venue.location.city}, ` : ''}
+                  {venue.location?.country ?? ''}
+                </p>
+              </div>
 
-            <div className="font-medium text-lg">${nightlyPrice} /night</div>
-          </div>
-
-          {/* Kalender + booking */}
-          <div className="grid gap-3">
-            <h2 className="text-xl font-semibold">Availability</h2>
-
-            <VenueCalendar
-              bookings={venue.bookings ?? []}
-              value={range}
-              onChange={setRange}
-              minDate={new Date()}
-            />
-
-            <div className="flex flex-wrap items-center gap-3">
-              <label className="text-sm flex items-center gap-2">
-                Guests:
-                <input
-                  type="number"
-                  min={1}
-                  max={maxGuests}
-                  value={guests}
-                  onChange={(e) => {
-                    const v = Math.max(1, Math.min(maxGuests, Number(e.target.value) || 1))
-                    setGuests(v)
-                  }}
-                  className="ml-1 w-24 rounded border px-2 py-1"
-                />
-              </label>
-              <span className="text-xs text-gray-500">Max {maxGuests} guest{maxGuests === 1 ? '' : 's'}</span>
-
-              <button
-                className="rounded-lg bg-black text-white px-4 py-2 disabled:opacity-50"
-                onClick={handleReserve}
-                disabled={!canReserve || booking}
-                aria-busy={booking}
-                title={!canReserve ? 'Select a date range' : 'Reserve'}
-              >
-                {booking ? 'Booking…' : 'Book now'}
-              </button>
-
-              {nights > 0 && (
-                <span className="text-sm text-gray-600">
-                  {Array.isArray(range) && range[0]?.toLocaleDateString()} →
-                  {Array.isArray(range) && range[1]?.toLocaleDateString()} · {nights}{' '}
-                  night{nights === 1 ? '' : 's'} · ${total}
-                </span>
+              {venue.description && (
+                <p className="text-gray-700 leading-relaxed">{venue.description}</p>
               )}
+
+              {/* Amenities */}
+              <div>
+                <h3 className="font-semibold mb-2">Features & Amenities</h3>
+                <ul className="grid gap-1 text-gray-700">
+                  {venue.meta?.wifi && <li>✅ Wifi</li>}
+                  {venue.meta?.breakfast && <li>✅ Breakfast included</li>}
+                  {venue.meta?.parking && <li>✅ Parking</li>}
+                  {venue.meta?.pets && <li>✅ Pets</li>}
+                  {!venue.meta?.wifi &&
+                    !venue.meta?.breakfast &&
+                    !venue.meta?.parking &&
+                    !venue.meta?.pets && <li className="text-gray-500">No amenities listed.</li>}
+                </ul>
+              </div>
+
+              <div className="font-semibold text-lg">
+                ${venue.price ?? 0} <span className="font-normal text-gray-600">/night</span>
+              </div>
             </div>
+
+            {/* Høyre kolonne – booking-kort */}
+            <aside className="md:sticky md:top-20 self-start">
+              <div className="rounded-2xl border bg-white shadow p-4">
+                <h2 className="text-lg font-semibold mb-3">Availability</h2>
+
+                <VenueCalendar
+                  bookings={(venue.bookings as BookingEx[]) ?? []}
+                  value={range}
+                  onChange={setRange}
+                  minDate={new Date()}
+                  className="rounded-lg border"
+                />
+
+                <div className="mt-3 flex items-center gap-2">
+                  <label className="text-sm flex items-center gap-2">
+                    Guests:
+                    <input
+                      type="number"
+                      min={1}
+                      max={maxGuests}
+                      value={guests}
+                      onChange={(e) => {
+                        const v = Math.max(1, Math.min(maxGuests, Number(e.target.value) || 1))
+                        setGuests(v)
+                      }}
+                      className="ml-1 w-24 rounded border px-2 py-1"
+                    />
+                  </label>
+                  <span className="text-xs text-gray-500">
+                    Max {maxGuests} guest{maxGuests === 1 ? '' : 's'}
+                  </span>
+                </div>
+
+                {/* Prisoppsummering */}
+                <div className="mt-3 rounded-lg bg-gray-50 border p-3 text-sm">
+                  <div className="flex justify-between">
+                    <span>{nights || 0} night{nights === 1 ? '' : 's'} × ${nightlyPrice}</span>
+                    <span className="font-medium">${total || 0}</span>
+                  </div>
+                </div>
+
+                <button
+                  className="mt-3 w-full btn-solid"
+                  onClick={handleReserve}
+                  disabled={!canReserve || booking}
+                  aria-busy={booking}
+                  title={!canReserve ? 'Select a date range' : 'Reserve'}
+                >
+                  {booking ? 'Booking…' : 'Book now'}
+                </button>
+              </div>
+            </aside>
           </div>
+
+          {/* Owner-only: Upcoming bookings for this venue */}
+          {isOwner && (
+            <section className="mt-10">
+              <h2 className="text-xl font-semibold mb-3">Upcoming bookings (owner view)</h2>
+              {upcomingBookings.length === 0 ? (
+                <p className="text-gray-600 text-sm">No upcoming bookings yet.</p>
+              ) : (
+                <ul className="divide-y divide-gray-200 rounded-xl border bg-white">
+                  {upcomingBookings.map(b => {
+                    const d1 = new Date(b.dateFrom)
+                    const d2 = new Date(b.dateTo)
+                    return (
+                      <li key={b.id} className="p-3 flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">
+                            {d1.toLocaleDateString(undefined, fmt)} → {d2.toLocaleDateString(undefined, fmt)}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {b.guests} guest{(b.guests||1) === 1 ? '' : 's'}
+                            {(b as BookingEx).customer?.name ? <> · {(b as BookingEx).customer!.name}</> : null}
+                          </p>
+                        </div>
+                        <span className="shrink-0 text-xs rounded-full border px-2 py-1 bg-gray-50">
+                          {nightsBetween(d1, d2)} night{nightsBetween(d1, d2) === 1 ? '' : 's'}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </section>
+          )}
+
+          {/* Bekreftelses-modal */}
+          <Modal
+            open={confirmOpen}
+            onClose={() => (booking ? null : setConfirmOpen(false))}
+            title="Confirm booking?"
+          >
+            <div className="grid gap-3 w-[min(90vw,420px)]">
+              <p className="text-sm text-gray-700">
+                Do you want to book <span className="font-medium">{venue.name}</span> from{' '}
+                <span className="font-medium">{startStr}</span> to{' '}
+                <span className="font-medium">{endStr}</span> for{' '}
+                <span className="font-medium">{guests}</span> guest{guests === 1 ? '' : 's'}?
+              </p>
+              {nights > 0 && (
+                <p className="text-sm text-gray-700">
+                  {nights} night{nights === 1 ? '' : 's'} × ${nightlyPrice} ={' '}
+                  <span className="font-semibold">${total}</span>
+                </p>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => setConfirmOpen(false)}
+                  disabled={booking}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn-solid"
+                  onClick={confirmReserve}
+                  disabled={booking}
+                  aria-busy={booking}
+                >
+                  {booking ? 'Booking…' : 'Confirm'}
+                </button>
+              </div>
+            </div>
+          </Modal>
         </>
       )}
     </section>

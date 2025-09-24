@@ -100,7 +100,7 @@ export default function VenueFilters({
         <button
           type="submit"
           disabled={busy}
-          className="ml-auto rounded-full bg-blue-600 text-white text-sm font-medium px-5 md:px-6 m-1 disabled:opacity-60"
+          className="ml-auto rounded-full bg-[#1B5071] text-white text-sm font-medium px-5 md:px-6 m-1 disabled:opacity-60"
         >
           Search
         </button>

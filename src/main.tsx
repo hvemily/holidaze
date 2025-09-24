@@ -6,6 +6,8 @@ import App from './App'
 import './index.css'
 import { ToastProvider } from './components/Toast'
 import './index.css'
+import 'react-loading-skeleton/dist/skeleton.css'
+
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

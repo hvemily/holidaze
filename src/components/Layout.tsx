@@ -1,19 +1,16 @@
 // src/components/Layout.tsx
 import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import type { PropsWithChildren } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../stores/auth'
 import { useToast } from './Toast'
 import Modal from './Modal'
+import UserMenu from './UserMenu'
+import Footer from './Footer'
 
 type NavToastState =
   | undefined
-  | {
-      toast?: {
-        type: 'success' | 'error'
-        message: string
-      }
-    }
+  | { toast?: { type: 'success' | 'error'; message: string } }
 
 export default function Layout({ children }: PropsWithChildren) {
   const { user, logout } = useAuth()
@@ -22,15 +19,19 @@ export default function Layout({ children }: PropsWithChildren) {
   const { success, error } = useToast()
 
   const [openLogoutConfirm, setOpenLogoutConfirm] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
+  const onAuthPage =
+    location.pathname.startsWith('/login') ||
+    location.pathname.startsWith('/register')
+
+  // Toast via navigate state
   useEffect(() => {
     const state = location.state as NavToastState
     const t = state?.toast
     if (t?.message) {
       if (t.type === 'success') success(t.message)
       else error(t.message)
-
-      // Fjern toast-state så den ikke kommer igjen ved back/refresh
       navigate(location.pathname + location.search, { replace: true })
     }
   }, [location, navigate, success, error])
@@ -38,101 +39,166 @@ export default function Layout({ children }: PropsWithChildren) {
   function handleLogoutConfirm() {
     logout()
     setOpenLogoutConfirm(false)
+    success('Logged out successfully')
+    navigate('/')
   }
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [location.pathname])
+
+  // Click outside / ESC to close
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!mobileOpen) return
+    const onDown = (e: MouseEvent) => {
+      if (!menuRef.current) return
+      if (!menuRef.current.contains(e.target as Node)) setMobileOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [mobileOpen])
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-white/80 backdrop-blur">
+      {/* Header */}
+      <header className="bg-header sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
-          <Link to="/" className="font-bold text-xl">Holidaze</Link>
+          <Link to="/" className="font-extrabold text-xl tracking-wide text-nav">
+            HOLIDAZE
+          </Link>
 
-          <nav className="flex items-center gap-4 text-sm">
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) => (isActive ? 'font-semibold' : 'text-gray-700')}
-            >
-              Home
-            </NavLink>
-
-            <NavLink
-              to="/venues"
-              className={({ isActive }) => (isActive ? 'font-semibold' : 'text-gray-700')}
-            >
-              Venues
-            </NavLink>
-
-            {user?.venueManager && (
-              <NavLink
-                to="/manager"
-                className={({ isActive }) => (isActive ? 'font-semibold' : 'text-gray-700')}
-              >
-                Manage
-              </NavLink>
-            )}
-
-            {user ? (
+          <nav className="relative flex items-center gap-4 text-sm">
+            {!user ? (
               <>
-                <NavLink
-                  to={`/profile/${user.name}`}
-                  className={({ isActive }) => (isActive ? 'font-semibold' : 'text-gray-700')}
-                >
-                  {user.name}
-                </NavLink>
-                {user.venueManager && (
-                  <span className="rounded-full border px-2 py-0.5 text-xs">Venue Manager</span>
+                {/* Mobile hamburger */}
+                {!onAuthPage && (
+                  <button
+                    type="button"
+                    aria-label="Open menu"
+                    aria-expanded={mobileOpen}
+                    aria-controls="mobile-auth-menu"
+                    onClick={() => setMobileOpen(o => !o)}
+                    className="md:hidden rounded-xl border border-white/50 bg-white/50 px-3 py-1 text-nav"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                      <rect x="3" y="6" width="18" height="2" rx="1" />
+                      <rect x="3" y="11" width="18" height="2" rx="1" />
+                      <rect x="3" y="16" width="18" height="2" rx="1" />
+                    </svg>
+                  </button>
                 )}
-                <button
-                  onClick={() => setOpenLogoutConfirm(true)}
-                  className="rounded-lg border px-3 py-1"
-                >
-                  Logout
-                </button>
+
+                {/* Desktop links */}
+                {!onAuthPage && (
+                  <>
+                    <NavLink
+                      to="/register?role=manager"
+                      className="text-nav hover:underline hidden md:inline"
+                    >
+                      Become a host
+                    </NavLink>
+                    <NavLink
+                      to="/register?role=guest"
+                      className="text-nav hover:underline hidden md:inline"
+                    >
+                      Register as guest
+                    </NavLink>
+                    <NavLink to="/login" className="btn hidden md:inline">
+                      Login
+                    </NavLink>
+                  </>
+                )}
+
+                {/* Mobile dropdown */}
+                {mobileOpen && !onAuthPage && (
+                  <div
+                    id="mobile-auth-menu"
+                    ref={menuRef}
+                    role="menu"
+                    className="absolute right-0 top-10 w-56 origin-top-right rounded-2xl border bg-white shadow-card overflow-hidden md:hidden"
+                  >
+                    <div className="p-2 grid gap-2">
+                      <NavLink
+                        to="/login"
+                        className="btn-solid w-full text-center"
+                        role="menuitem"
+                      >
+                        Login
+                      </NavLink>
+                      <NavLink
+                        to="/register?role=guest"
+                        className="btn w-full text-center"
+                        role="menuitem"
+                      >
+                        Register as guest
+                      </NavLink>
+                      <NavLink
+                        to="/register?role=manager"
+                        className="btn w-full text-center"
+                        role="menuitem"
+                      >
+                        Become a host
+                      </NavLink>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <>
+                {/* Desktop nav for innlogget */}
                 <NavLink
-                  to="/login"
-                  className={({ isActive }) => (isActive ? 'font-semibold' : 'text-gray-700')}
+                  to="/"
+                  end
+                  className={({ isActive }) =>
+                    `${isActive ? 'font-semibold' : ''} text-nav hover:underline hidden md:inline`
+                  }
                 >
-                  Login
+                  Home
                 </NavLink>
-                <NavLink to="/register" className="rounded-lg border px-3 py-1">
-                  Register
+                <NavLink
+                  to="/venues"
+                  className={({ isActive }) =>
+                    `${isActive ? 'font-semibold' : ''} text-nav hover:underline hidden md:inline`
+                  }
+                >
+                  Venues
                 </NavLink>
+
+                <UserMenu user={user} onLogoutClick={() => setOpenLogoutConfirm(true)} />
               </>
             )}
           </nav>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
         {children}
       </main>
 
-      <footer className="border-t bg-white/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-sm text-gray-600">
-          © {new Date().getFullYear()} Holidaze
-        </div>
-      </footer>
+      <Footer />
 
       {/* Logout confirm modal */}
-      <Modal open={openLogoutConfirm} onClose={() => setOpenLogoutConfirm(false)} title="Log out?">
+      <Modal
+        open={openLogoutConfirm}
+        onClose={() => setOpenLogoutConfirm(false)}
+        title="Log out?"
+      >
         <div className="grid gap-3">
           <p className="text-sm text-gray-700">Are you sure you want to log out?</p>
           <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setOpenLogoutConfirm(false)}
-              className="rounded border px-4 py-2 text-sm"
-            >
+            <button type="button" onClick={() => setOpenLogoutConfirm(false)} className="btn">
               Cancel
             </button>
-            <button
-              type="button"
-              onClick={handleLogoutConfirm}
-              className="rounded bg-red-600 text-white px-4 py-2 text-sm"
-            >
+            <button type="button" onClick={handleLogoutConfirm} className="btn-solid">
               Log out
             </button>
           </div>

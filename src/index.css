@@ -4,64 +4,96 @@
 @tailwind utilities;
 
 /* ---- Base tokens ---- */
-.bg-header { background-color: #CBD8E0; }
-.text-nav  { color: #1B5071; }
+.bg-header {
+  background-color: #cbd8e0;
+}
+.text-nav {
+  color: #1b5071;
+}
 
 /* ---- Components (uten @apply) ---- */
 .btn {
   border-radius: 12px;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
-  color: #5285A5;
-  border: 1px solid #5285A5;
+  color: #5285a5;
+  border: 1px solid #5285a5;
   background: transparent;
-  transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.btn:hover { background-color: rgba(82,133,165,.10); }
-.btn:disabled { opacity: .6; cursor: not-allowed; }
+.btn:hover {
+  background-color: rgba(82, 133, 165, 0.1);
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .btn-solid {
   border-radius: 12px;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   color: #fff;
-  background-color: #5285A5;
-  border: 1px solid #5285A5;
-  transition: opacity .15s ease;
+  background-color: #5285a5;
+  border: 1px solid #5285a5;
+  transition: opacity 0.15s ease;
 }
-.btn-solid:disabled { opacity: .6; cursor: not-allowed; }
+.btn-solid:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .btn-ghost {
   border-radius: 12px;
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
-  color: #5285A5;
+  color: #5285a5;
   background: transparent;
   border: 1px solid transparent;
-  transition: background-color .15s ease;
+  transition: background-color 0.15s ease;
 }
-.btn-ghost:hover { background-color: rgba(255,255,255,.7); }
+.btn-ghost:hover {
+  background-color: rgba(255, 255, 255, 0.7);
+}
+.btn-hero {
+  @apply rounded-full px-6 py-2 font-medium transition-colors duration-200
+       bg-white text-[#1B5071];
+}
 
-.label { font-size: .875rem; font-weight: 500; color: #374151; }
+.btn-hero:hover,
+.btn-hero:focus {
+  @apply bg-[#1B5071] text-white;
+}
+
+.btn-hero:focus {
+  @apply outline-none ring-2 ring-[#5285A5];
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
 
 .input {
   border-radius: 12px;
   border: 1px solid #e5e7eb; /* gray-200 */
-  padding: .5rem .75rem;
-  font-size: .875rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
   background: #fff;
 }
 .input:focus {
   outline: none;
-  border-color: #5285A5;
-  box-shadow: 0 0 0 2px rgba(82,133,165,.40);
+  border-color: #5285a5;
+  box-shadow: 0 0 0 2px rgba(82, 133, 165, 0.4);
 }
 
 .select {
   border-radius: 12px;
   border: 1px solid #e5e7eb;
-  padding: .5rem .75rem;
-  font-size: .875rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
   background: #fff;
 }
 
@@ -69,7 +101,9 @@
   border-radius: 16px;
   background: #fff;
   border: 1px solid #e5e7eb; /* gray-200 */
-  box-shadow: 0 2px 20px rgba(0,0,0,.07);
-  transition: box-shadow .2s ease;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.07);
+  transition: box-shadow 0.2s ease;
 }
-.card:hover { box-shadow: 0 6px 30px rgba(0,0,0,.12); }
+.card:hover {
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+}

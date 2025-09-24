@@ -1,20 +1,22 @@
 // src/pages/profile/Profile.tsx
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '@/stores/auth'
 import { api } from '@/utils/api'
-import type { Venue, Profile as TProfile } from '@/utils/types'
+import type { Venue, Profile as TProfile, Booking } from '@/utils/types'
 import Modal from '@/components/Modal'
 import VenueForm, { type VenuePayload } from '@/pages/manager/VenueForm'
 import { useProfileData } from '@/hooks/useProfileData'
 import ProfileHeader from '@/components/ProfileHeader'
-import ProfileForms from '@/components/ProfileForms'
 import ProfileBookings from '@/components/ProfileBookings'
 import ProfileVenuesList from '@/components/ProfileVenueList'
 import Spinner from '@/components/Spinner'
 import { useToast } from '@/components/Toast'
+import EditAvatarModal from '@/components/EditAvatarModal'
 
 type RouteParams = { name: string }
+type BookingEx = Booking & { customer?: { name?: string } }
+type VenueWithBookings = Venue & { bookings?: BookingEx[] }
 
 export default function Profile() {
   const { name } = useParams<RouteParams>()
@@ -23,19 +25,38 @@ export default function Profile() {
     useProfileData(name)
   const { success: toastSuccess, error: toastError } = useToast()
 
-  const isSelf = useMemo(
-    () => (user?.name && name ? user.name.toLowerCase() === name.toLowerCase() : false),
-    [user, name]
-  )
+  const isSelf =
+    !!(user?.name && name) && user.name.toLowerCase() === name.toLowerCase()
 
   // Modals
   const [openCreate, setOpenCreate] = useState(false)
   const [editing, setEditing] = useState<Venue | null>(null)
   const [saving, setSaving] = useState(false)
+  const [openEditProfile, setOpenEditProfile] = useState(false)
 
   // Delete confirm
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+
+  // Når profilen er venue manager: hent venues med _bookings=true så vi kan vise kommende bookinger
+  useEffect(() => {
+    if (!loading && profile?.venueManager && name) {
+      ;(async () => {
+        try {
+          const res = await api.get<{ data: Venue[] }>(
+            `/holidaze/profiles/${encodeURIComponent(
+              name
+            )}/venues?sort=created&limit=50&_bookings=true`
+          )
+          setVenues(res.data || [])
+        } catch (e: unknown) {
+          const msg =
+            e instanceof Error ? e.message : 'Failed to load venues with bookings'
+          toastError(msg)
+        }
+      })()
+    }
+  }, [loading, profile?.venueManager, name, setVenues, toastError])
 
   if (loading) {
     return (
@@ -52,7 +73,9 @@ export default function Profile() {
   async function refreshVenues() {
     try {
       const res = await api.get<{ data: Venue[] }>(
-        `/holidaze/profiles/${encodeURIComponent(safeName)}/venues?sort=created&limit=50`
+        `/holidaze/profiles/${encodeURIComponent(
+          safeName
+        )}/venues?sort=created&limit=50&_bookings=true`
       )
       setVenues(res.data || [])
     } catch (e: unknown) {
@@ -92,7 +115,6 @@ export default function Profile() {
     }
   }
 
-  // Kalles fra liste-knapp: åpner bekreftelsesmodal
   function requestDelete(id: string) {
     setConfirmDeleteId(id)
   }
@@ -113,29 +135,46 @@ export default function Profile() {
     }
   }
 
+  // --- Upcoming bookings across my venues (for venue managers) ---
+  const today0 = new Date()
+  today0.setHours(0, 0, 0, 0)
+  const fmt: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
+
+  const upcomingAcrossVenues: Array<
+    BookingEx & { venueId: string; venueName: string }
+  > = profile.venueManager
+    ? (venues as VenueWithBookings[])
+        .flatMap(v =>
+          (v.bookings ?? [])
+            .filter(b => new Date(b.dateTo).getTime() >= today0.getTime())
+            .map(b => ({ ...b, venueId: v.id, venueName: v.name }))
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime()
+        )
+    : []
+
   return (
-    <section className="grid gap-6 max-w-3xl mx-auto">
+    <section className="grid gap-6 max-w-5xl mx-auto">
+      {/* Header med banner + avatar */}
       <ProfileHeader profile={profile} />
 
-      {/* Actions under the header */}
+      {/* Handlinger under header */}
       <div className="flex justify-center gap-3 -mt-2">
         {isSelf && (
-          <a
-            href="#profile-edit"
-            className="rounded-xl bg-gray-700 text-white px-4 py-2 text-sm shadow hover:bg-gray-800"
-            onClick={(e) => {
-              e.preventDefault()
-              document.getElementById('profile-edit')?.scrollIntoView({ behavior: 'smooth' })
-            }}
+          <button
+            type="button"
+            className="btn-solid rounded-full"
+            onClick={() => setOpenEditProfile(true)}
           >
             Edit profile
-          </a>
+          </button>
         )}
-
         {isSelf && profile.venueManager && (
           <button
             type="button"
-            className="rounded-xl bg-blue-600 text-white px-4 py-2 text-sm shadow hover:bg-blue-700"
+            className="btn rounded-full"
             onClick={() => setOpenCreate(true)}
           >
             New venue
@@ -143,48 +182,81 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Forms (only for self) */}
-      {isSelf && (
-        <div id="profile-edit">
-          <ProfileForms
-            name={safeName}
-            profile={profile}
-            onUpdated={(p: TProfile) => setProfile(p)}
-          />
+      {/* To kort: My venues + Bookings */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-2xl border bg-white shadow-sm">
+          <div className="px-5 py-4 border-b">
+            <h2 className="text-lg font-semibold">My venues</h2>
+          </div>
+          <div className="p-4">
+            {profile.venueManager ? (
+              <ProfileVenuesList
+                venues={venues}
+                canEdit={isSelf}
+                onEdit={setEditing}
+                onDelete={requestDelete}
+                onCreateClick={() => setOpenCreate(true)}
+              />
+            ) : (
+              <p className="text-gray-600">You’re not a Venue Manager.</p>
+            )}
+          </div>
         </div>
-      )}
 
-      {/* Bookings */}
-      <section className="grid gap-3">
-        <h2 className="text-xl font-semibold">Upcoming bookings</h2>
-        <ProfileBookings bookings={bookings} />
-      </section>
+        <div className="rounded-2xl border bg-white shadow-sm">
+          <div className="px-5 py-4 border-b">
+            <h2 className="text-lg font-semibold">Upcoming bookings</h2>
+          </div>
+          <div className="p-4">
+            {profile.venueManager && isSelf ? (
+              upcomingAcrossVenues.length ? (
+                <ul className="divide-y">
+                  {upcomingAcrossVenues.slice(0, 12).map(b => {
+                    const d1 = new Date(b.dateFrom)
+                    const d2 = new Date(b.dateTo)
+                    return (
+                      <li key={b.id} className="p-3 flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <p className="font-medium truncate">
+                            {d1.toLocaleDateString(undefined, fmt)} → {d2.toLocaleDateString(undefined, fmt)}
+                          </p>
+                          <p className="text-sm text-gray-600 truncate">
+                            {b.guests} guest{(b.guests || 1) === 1 ? '' : 's'}
+                            {b.customer?.name ? <> · {b.customer.name}</> : null}
+                            {' · '}
+                            <span className="truncate">{b.venueName}</span>
+                          </p>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : (
+                <p className="text-gray-600">No upcoming bookings.</p>
+              )
+            ) : (
+              <ProfileBookings bookings={bookings} />
+            )}
+          </div>
+        </div>
+      </div>
 
-      {/* Venues (visible if user is a manager) */}
-      {profile.venueManager && (
-        <ProfileVenuesList
-          venues={venues}
-          canEdit={isSelf}
-          onEdit={setEditing}
-          onDelete={requestDelete}   // 👈 erstatter confirm(...) med egen modal
-          onCreateClick={() => setOpenCreate(true)}
-        />
-      )}
-
-      {/* Create modal */}
+      {/* Create venue modal */}
       <Modal open={openCreate} onClose={() => setOpenCreate(false)} title="Create venue">
         <VenueForm submitting={saving} onSubmit={handleCreate} />
       </Modal>
 
-      {/* Edit modal */}
+      {/* Edit venue modal */}
       <Modal open={!!editing} onClose={() => setEditing(null)} title="Edit venue">
-        {editing && (
-          <VenueForm initial={editing} submitting={saving} onSubmit={handleEdit} />
-        )}
+        {editing && <VenueForm initial={editing} submitting={saving} onSubmit={handleEdit} />}
       </Modal>
 
       {/* Delete confirm modal */}
-      <Modal open={!!confirmDeleteId} onClose={() => (deleting ? null : setConfirmDeleteId(null))} title="Delete venue?">
+      <Modal
+        open={!!confirmDeleteId}
+        onClose={() => (deleting ? null : setConfirmDeleteId(null))}
+        title="Delete venue?"
+      >
         <div className="grid gap-3">
           <p className="text-sm text-gray-700">
             Are you sure you want to delete this venue? This action cannot be undone.
@@ -192,7 +264,7 @@ export default function Profile() {
           <div className="flex justify-end gap-2">
             <button
               type="button"
-              className="rounded border px-4 py-2 text-sm"
+              className="btn"
               onClick={() => setConfirmDeleteId(null)}
               disabled={deleting}
             >
@@ -200,7 +272,7 @@ export default function Profile() {
             </button>
             <button
               type="button"
-              className="rounded bg-red-600 text-white px-4 py-2 text-sm disabled:opacity-50"
+              className="btn-solid bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
               onClick={confirmDelete}
               disabled={deleting}
               aria-busy={deleting}
@@ -210,6 +282,15 @@ export default function Profile() {
           </div>
         </div>
       </Modal>
+
+      {/* Edit profile (avatar) modal */}
+      <EditAvatarModal
+        open={openEditProfile}
+        onClose={() => setOpenEditProfile(false)}
+        name={safeName}
+        profile={profile}
+        onUpdated={(p: TProfile) => setProfile(p)}
+      />
     </section>
   )
 }
