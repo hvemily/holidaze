@@ -9,7 +9,7 @@ import RatingStars from '@/components/RatingStars'
 import Spinner from '@/components/Spinner'
 import { useToast } from '@/components/Toast'
 import Modal from '@/components/Modal'
-import { useAuth } from '@/stores/auth'   // 👈 for å sjekke om bruker er logget inn
+import { useAuth } from '@/stores/auth'
 
 type RouteParams = { id: string }
 type RangeValue = Date | [Date, Date] | null
@@ -83,7 +83,7 @@ export default function VenueDetail() {
   }, [id, toastError])
 
   function handleReserve() {
-    // 👇 hvis ikke logget inn: send til login m/ toast
+    // hvis ikke logget inn: send til login m/ toast
     if (!user) {
       navigate('/login', {
         state: {
@@ -127,7 +127,7 @@ export default function VenueDetail() {
       toastSuccess('Booked successfully!')
       setConfirmOpen(false)
     } catch (e: unknown) {
-      // 👇 fang 401 og redirect til login m/ toast
+      // fang 401 og redirect til login m/ toast
       if (axios.isAxiosError(e)) {
         const status = e.response?.status
         const msg = String(e.response?.data?.message || '')
@@ -162,9 +162,8 @@ export default function VenueDetail() {
   const startStr = Array.isArray(range) && range[0] ? range[0].toLocaleDateString(undefined, fmt) : ''
   const endStr   = Array.isArray(range) && range[1] ? range[1].toLocaleDateString(undefined, fmt) : ''
 
-
   return (
-    <section className="py-6 sm:py-8">
+    <section className="py-6 sm:py-8 overflow-x-clip">
       {loading && (
         <div className="grid place-items-center py-16">
           <Spinner />
@@ -177,13 +176,13 @@ export default function VenueDetail() {
 
       {!loading && venue && (
         <>
-          {/* Hero – faste høyder pr breakpoint så ingenting flyter ut på mobil */}
+          {/* Hero */}
           {mainImg && (
             <div className="relative overflow-hidden rounded-2xl shadow border">
               <img
                 src={mainImg.url}
                 alt={mainImg.alt ?? venue.name}
-                className="w-full h-48 sm:h-64 md:h-80 lg:h-[520px] object-cover"
+                className="block w-full h-48 sm:h-64 md:h-80 lg:h-[520px] object-cover"
               />
               <div className="absolute right-3 top-3 sm:right-4 sm:top-4 rounded-full bg-white/85 backdrop-blur px-2.5 py-1">
                 <RatingStars value={Number(venue.rating) || 0} size="md" showNumber />
@@ -191,7 +190,7 @@ export default function VenueDetail() {
             </div>
           )}
 
-          {/* Thumbnails – grid (ikke hor. scroll) for å unngå overflow */}
+          {/* Thumbnails */}
           {gallery.length > 1 && (
             <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
               {gallery.slice(0, 6).map((m, i) => (
@@ -199,13 +198,13 @@ export default function VenueDetail() {
                   key={i}
                   type="button"
                   onClick={() => setActiveIdx(i)}
-                  className={`rounded-xl border overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 ${i === activeIdx ? 'ring-2 ring-blue-500' : ''}`}
+                  className={`box-border rounded-xl border overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500 ${i === activeIdx ? 'ring-2 ring-blue-500' : ''}`}
                   aria-label={`Show image ${i + 1}`}
                 >
                   <img
                     src={m.url}
                     alt={m.alt ?? venue.name}
-                    className="w-full aspect-[4/3] object-cover"
+                    className="block w-full max-w-full aspect-[4/3] object-cover"
                     loading="lazy"
                   />
                 </button>
@@ -214,9 +213,9 @@ export default function VenueDetail() {
           )}
 
           {/* 2-kolonne – stack på mobil */}
-          <div className="mt-6 sm:mt-8 grid gap-6 md:grid-cols-[1fr,360px] lg:grid-cols-[1fr,380px]">
+          <div className="mt-6 sm:mt-8 grid gap-6 md:[grid-template-columns:minmax(0,1fr)_360px] lg:[grid-template-columns:minmax(0,1fr)_380px]">
             {/* Venstre kolonne */}
-            <div className="grid gap-5">
+            <div className="grid gap-5 min-w-0">
               <div>
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                   {venue.name}
@@ -251,7 +250,7 @@ export default function VenueDetail() {
             </div>
 
             {/* Høyre kolonne – booking */}
-            <aside className="md:sticky md:top-20 self-start">
+            <aside className="md:sticky md:top-20 self-start min-w-0">
               <div className="rounded-2xl border bg-white shadow p-4">
                 <h2 className="text-lg font-semibold mb-3">Availability</h2>
 

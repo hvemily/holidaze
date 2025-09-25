@@ -1,6 +1,7 @@
 export default function Hero() {
-  const img =
-    'https://images.unsplash.com/photo-1664825381616-5cb8397fd9b1?q=80&w=1600&auto=format&fit=crop&ixlib=rb-4.1.0'
+  // base url uten w/q
+  const base =
+    'https://images.unsplash.com/photo-1664825381616-5cb8397fd9b1?auto=format&fit=crop&ixlib=rb-4.1.0'
 
   return (
     <section
@@ -11,10 +12,17 @@ export default function Hero() {
       "
     >
       <img
-        src={img}
+        src={`${base}&w=1600&q=70`}
+        srcSet={`
+          ${base}&w=768&q=60 768w,
+          ${base}&w=1280&q=65 1280w,
+          ${base}&w=1600&q=70 1600w
+        `}
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1600px"
         alt="Norwegian fjord landscape with waterfalls and mountains"
         className="absolute inset-0 h-full w-full object-cover"
         fetchPriority="high"
+        decoding="async"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-black/40" />
       <div className="relative z-10 flex h-full items-center justify-center px-4">
@@ -28,7 +36,6 @@ export default function Hero() {
           <a href="#venues-list" className="inline-block mt-6 btn-hero">
             Browse venues
           </a>
-
         </div>
       </div>
     </section>

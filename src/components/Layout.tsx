@@ -8,7 +8,7 @@ import Modal from './Modal'
 import UserMenu from './UserMenu'
 import Footer from './Footer'
 
-// 👇 import logo fra assets
+// Logo
 import logo from '@/assets/holidaze-logo.png'
 
 type NavToastState =
@@ -62,7 +62,7 @@ export default function Layout({ children }: PropsWithChildren) {
     }
   }, [mobileOpen])
 
-  // Click outside/ESC to close (for desktop only; on mobile vi bruker backdrop)
+  // ESC close for mobile panel
   const panelRef = useRef<HTMLDivElement | null>(null)
   useEffect(() => {
     if (!mobileOpen) return
@@ -80,22 +80,30 @@ export default function Layout({ children }: PropsWithChildren) {
         className="bg-header sticky top-0 z-50"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div
+          className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+          style={{
+            // safe-area sider (iPhone notch)
+            paddingLeft: 'max(env(safe-area-inset-left), 1rem)',
+            paddingRight: 'max(env(safe-area-inset-right), 1rem)',
+          }}
+        >
           <div className="py-3 flex items-center justify-between">
-            {/* Logo */}
+            {/* Logo venstre – én kilde til sannhet */}
             <Link to="/" className="flex items-center">
               <img
                 src={logo}
                 alt="Holidaze logo"
-                className="h-16 w-auto"
+                className="h-12 md:h-16 w-auto"
               />
             </Link>
 
+            {/* Høyre: nav / brukermeny */}
             <nav className="flex items-center gap-4 text-sm">
               {!user ? (
-                <>
-                  {/* Mobile hamburger */}
-                  {!onAuthPage && (
+                !onAuthPage && (
+                  <>
+                    {/* Mobile hamburger */}
                     <button
                       type="button"
                       aria-label="Open menu"
@@ -110,32 +118,27 @@ export default function Layout({ children }: PropsWithChildren) {
                         <rect x="3" y="16" width="18" height="2" rx="1" />
                       </svg>
                     </button>
-                  )}
 
-                  {/* Desktop links */}
-                  {!onAuthPage && (
-                    <>
-                      <NavLink
-                        to="/register?role=manager"
-                        className="text-nav hover:underline hidden md:inline"
-                      >
-                        Become a host
-                      </NavLink>
-                      <NavLink
-                        to="/register?role=guest"
-                        className="text-nav hover:underline hidden md:inline"
-                      >
-                        Register as guest
-                      </NavLink>
-                      <NavLink to="/login" className="btn hidden md:inline">
-                        Login
-                      </NavLink>
-                    </>
-                  )}
-                </>
+                    {/* Desktop lenker */}
+                    <NavLink
+                      to="/register?role=manager"
+                      className="text-nav hover:underline hidden md:inline"
+                    >
+                      Become a host
+                    </NavLink>
+                    <NavLink
+                      to="/register?role=guest"
+                      className="text-nav hover:underline hidden md:inline"
+                    >
+                      Register as guest
+                    </NavLink>
+                    <NavLink to="/login" className="btn hidden md:inline">
+                      Login
+                    </NavLink>
+                  </>
+                )
               ) : (
                 <>
-                  {/* Desktop nav for innlogget */}
                   <NavLink
                     to="/"
                     end
