@@ -4,6 +4,12 @@
 @tailwind utilities;
 
 /* ---- Base tokens ---- */
+
+html,
+body {
+  overflow-x: hidden;
+}
+
 .bg-header {
   background-color: #cbd8e0;
 }
