@@ -1,6 +1,7 @@
 // src/pages/venues/VenueDetail.tsx
 import { useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { api } from '@/utils/api'
 import type { Venue, Booking } from '@/utils/types'
 import VenueCalendar from '@/components/VenueCalendar'
@@ -8,6 +9,7 @@ import RatingStars from '@/components/RatingStars'
 import Spinner from '@/components/Spinner'
 import { useToast } from '@/components/Toast'
 import Modal from '@/components/Modal'
+import { useAuth } from '@/stores/auth'   // 👈 for å sjekke om bruker er logget inn
 
 type RouteParams = { id: string }
 type RangeValue = Date | [Date, Date] | null
@@ -21,6 +23,8 @@ function nightsBetween(a?: Date, b?: Date) {
 
 export default function VenueDetail() {
   const { id } = useParams<RouteParams>()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [venue, setVenue] = useState<Venue | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -79,6 +83,17 @@ export default function VenueDetail() {
   }, [id, toastError])
 
   function handleReserve() {
+    // 👇 hvis ikke logget inn: send til login m/ toast
+    if (!user) {
+      navigate('/login', {
+        state: {
+          toast: { type: 'error', message: 'You need to be logged in to book a venue.' },
+        },
+        replace: true,
+      })
+      return
+    }
+
     if (!Array.isArray(range) || !range[0] || !range[1]) {
       toastError('Please select a date range.')
       return
@@ -112,6 +127,22 @@ export default function VenueDetail() {
       toastSuccess('Booked successfully!')
       setConfirmOpen(false)
     } catch (e: unknown) {
+      // 👇 fang 401 og redirect til login m/ toast
+      if (axios.isAxiosError(e)) {
+        const status = e.response?.status
+        const msg = String(e.response?.data?.message || '')
+        if (status === 401 || /no authorization header/i.test(msg)) {
+          setConfirmOpen(false)
+          navigate('/login', {
+            state: {
+              toast: { type: 'error', message: 'You need to be logged in to book a venue.' },
+            },
+            replace: true,
+          })
+          setBooking(false)
+          return
+        }
+      }
       const msg = e instanceof Error ? e.message : 'Unable to create booking'
       toastError(msg)
     } finally {
@@ -130,6 +161,7 @@ export default function VenueDetail() {
   const fmt: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
   const startStr = Array.isArray(range) && range[0] ? range[0].toLocaleDateString(undefined, fmt) : ''
   const endStr   = Array.isArray(range) && range[1] ? range[1].toLocaleDateString(undefined, fmt) : ''
+
 
   return (
     <section className="py-6 sm:py-8">

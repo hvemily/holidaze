@@ -31,7 +31,7 @@ export default function Footer() {
           <h2 className="text-lg font-bold">HOLIDAZE</h2>
           <p className="mt-2 text-sm text-gray-200 leading-relaxed">
             Find your perfect holiday stay with ease. <br />
-            Built by students, for explorers ✈️
+            Built by travelers, for explorers ✈️
           </p>
         </div>
 

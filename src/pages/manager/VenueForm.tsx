@@ -203,13 +203,19 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
         <label className="text-sm font-medium" htmlFor="vf-price">Price (per night)</label>
         <input
           id="vf-price"
-          type="number" min={0}
-          className="rounded border px-3 py-2 w-40"
+          type="number"
+          min={0}
+          step={1}
+          inputMode="numeric"
+          pattern="[0-9]*"
+          className="no-spinner rounded border px-3 py-2 w-40"
           value={price}
-          onChange={e=>setPrice(Number(e.target.value) || 0)}
+          onChange={(e) => setPrice(Number(e.target.value) || 0)}
+          onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()} // hindrer scroll-zoom på tall
           required
         />
       </div>
+
 
       {/* ⭐ Rating */}
       <div className="grid gap-1">

@@ -113,3 +113,17 @@ body {
 .card:hover {
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
 }
+
+/* index.css (eller global css) */
+@layer utilities {
+  /* Skjul piler og gjør feltet "plain" på tvers av browsere */
+  .no-spinner {
+    -moz-appearance: textfield; /* Firefox */
+    appearance: textfield; /* standard fallback */
+  }
+  .no-spinner::-webkit-outer-spin-button,
+  .no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none; /* Chrome/Safari/Edge */
+    margin: 0;
+  }
+}

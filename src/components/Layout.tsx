@@ -8,6 +8,9 @@ import Modal from './Modal'
 import UserMenu from './UserMenu'
 import Footer from './Footer'
 
+// 👇 import logo fra assets
+import logo from '@/assets/holidaze-logo.png'
+
 type NavToastState =
   | undefined
   | { toast?: { type: 'success' | 'error'; message: string } }
@@ -73,11 +76,19 @@ export default function Layout({ children }: PropsWithChildren) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-header sticky top-0 z-50" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <header
+        className="bg-header sticky top-0 z-50"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="py-3 flex items-center justify-between">
-            <Link to="/" className="font-extrabold text-xl tracking-wide text-nav">
-              HOLIDAZE
+            {/* Logo */}
+            <Link to="/" className="flex items-center">
+              <img
+                src={logo}
+                alt="Holidaze logo"
+                className="h-16 w-auto"
+              />
             </Link>
 
             <nav className="flex items-center gap-4 text-sm">
