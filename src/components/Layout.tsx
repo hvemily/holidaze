@@ -83,19 +83,14 @@ export default function Layout({ children }: PropsWithChildren) {
         <div
           className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
           style={{
-            // safe-area sider (iPhone notch)
             paddingLeft: 'max(env(safe-area-inset-left), 1rem)',
             paddingRight: 'max(env(safe-area-inset-right), 1rem)',
           }}
         >
           <div className="py-3 flex items-center justify-between">
-            {/* Logo venstre – én kilde til sannhet */}
+            {/* Logo venstre */}
             <Link to="/" className="flex items-center">
-              <img
-                src={logo}
-                alt="Holidaze logo"
-                className="h-12 md:h-16 w-auto"
-              />
+              <img src={logo} alt="Holidaze logo" className="h-12 md:h-16 w-auto" />
             </Link>
 
             {/* Høyre: nav / brukermeny */}
@@ -148,14 +143,15 @@ export default function Layout({ children }: PropsWithChildren) {
                   >
                     Home
                   </NavLink>
-                  <NavLink
-                    to="/venues"
-                    className={({ isActive }) =>
-                      `${isActive ? 'font-semibold' : ''} text-nav hover:underline hidden md:inline`
-                    }
+
+                  {/* Brukernavn som ren label – ikke interaktiv */}
+                  <span
+                    className="hidden md:inline text-nav font-medium truncate max-w-[18ch]"
+                    aria-label="Logged in user"
+                    title={user.name}
                   >
-                    Venues
-                  </NavLink>
+                    {user.name}
+                  </span>
 
                   <UserMenu user={user} onLogoutClick={() => setOpenLogoutConfirm(true)} />
                 </>
@@ -227,7 +223,11 @@ export default function Layout({ children }: PropsWithChildren) {
             <button type="button" onClick={() => setOpenLogoutConfirm(false)} className="btn">
               Cancel
             </button>
-            <button type="button" onClick={handleLogoutConfirm} className="btn-solid">
+            <button
+              type="button"
+              onClick={handleLogoutConfirm}
+              className="btn-danger"
+            >
               Log out
             </button>
           </div>

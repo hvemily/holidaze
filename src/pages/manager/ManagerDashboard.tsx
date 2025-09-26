@@ -285,10 +285,11 @@ export default function ManagerDashboard() {
                       Edit
                     </Link>
                     <button
+                      type="button"
                       onClick={() => onDelete(v.id)}
                       disabled={deletingId === v.id}
                       aria-busy={deletingId === v.id}
-                      className="rounded-lg border px-3 py-1 text-sm text-red-700 disabled:opacity-50"
+                      className="btn-danger text-sm px-3 py-1 disabled:opacity-50"
                     >
                       {deletingId === v.id ? (
                         <span className="flex items-center gap-1">

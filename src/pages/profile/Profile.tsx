@@ -166,7 +166,10 @@ export default function Profile() {
           {isSelf && (
             <button
               type="button"
-              className="btn-solid rounded-full w-full sm:w-auto"
+              className="rounded-full w-full sm:w-auto
+                         px-4 py-2 text-sm font-normal
+                         text-white bg-holi-nav border border-holi-nav
+                         hover:bg-holi-nav/90"
               onClick={() => setOpenEditProfile(true)}
             >
               Edit profile
@@ -274,7 +277,7 @@ export default function Profile() {
             </button>
             <button
               type="button"
-              className="btn-solid bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              className="btn-danger"
               onClick={confirmDelete}
               disabled={deleting}
               aria-busy={deleting}

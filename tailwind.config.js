@@ -1,6 +1,6 @@
 ﻿/** @type {import('tailwindcss').Config} */
 export default {
-  content: ["./index.html","./src/**/*.{js,ts,jsx,tsx}"],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     container: {
       center: true,
@@ -19,6 +19,9 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Inter", "ui-sans-serif", "system-ui"],
+      },
       colors: {
         holi: { header: "#CBD8E0", nav: "#1B5071", btn: "#5285A5" },
       },

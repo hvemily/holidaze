@@ -1,12 +1,14 @@
 /* src/index.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ---- Base tokens ---- */
-
 html,
 body {
+  @apply font-sans; /* Inter fra tailwind.config */
   overflow-x: hidden;
 }
 
@@ -17,113 +19,113 @@ body {
   color: #1b5071;
 }
 
-/* ---- Components (uten @apply) ---- */
-.btn {
-  border-radius: 12px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  color: #5285a5;
-  border: 1px solid #5285a5;
-  background: transparent;
-  transition: background-color 0.15s ease, color 0.15s ease,
-    border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.btn:hover {
-  background-color: rgba(82, 133, 165, 0.1);
-}
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* ---- Components ---- */
+@layer components {
+  .btn {
+    @apply rounded-xl px-4 py-2 text-sm font-normal
+      text-[#5285A5] border border-[#5285A5] bg-transparent
+      transition-colors;
+  }
+  .btn:hover {
+    @apply bg-[#5285A5]/10;
+  }
+  .btn:disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
+
+  .btn-solid {
+    @apply rounded-xl px-4 py-2 text-sm font-normal
+      text-white bg-[#5285A5] border border-[#5285A5]
+      transition-opacity;
+  }
+  .btn-solid:disabled {
+    @apply opacity-60 cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply rounded-xl px-4 py-2 text-sm font-normal
+      text-[#5285A5] border border-transparent
+      transition-colors;
+  }
+  .btn-ghost:hover {
+    @apply bg-white/70;
+  }
+
+  .btn-hero {
+    @apply rounded-full px-6 py-2 font-medium
+      bg-white text-[#1B5071]
+      transition-colors duration-200;
+  }
+  .btn-hero:hover,
+  .btn-hero:focus {
+    @apply bg-[#1B5071] text-white;
+  }
+  .btn-hero:focus {
+    @apply outline-none ring-2 ring-[#5285A5];
+  }
+
+  /* 🔴 Danger button */
+  .btn-danger {
+    @apply rounded-xl px-4 py-2 text-sm font-normal
+      text-white bg-red-600 border border-red-600 shadow-sm
+      transition-colors;
+  }
+  .btn-danger:hover {
+    @apply bg-red-700 border-red-700;
+  }
+  .btn-danger:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* Focus states */
+  .btn,
+  .btn-solid,
+  .btn-ghost,
+  .btn-danger {
+    @apply focus:outline-none;
+  }
+  .btn:focus-visible,
+  .btn-solid:focus-visible {
+    @apply ring-2 ring-[#5285A5]/40;
+  }
+  .btn-danger:focus-visible {
+    @apply ring-2 ring-red-300 border-red-600;
+  }
+
+  .label {
+    @apply text-sm font-medium text-gray-700;
+  }
+
+  .input {
+    @apply rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white;
+  }
+  .input:focus {
+    outline: none;
+    border-color: #5285a5;
+    box-shadow: 0 0 0 2px rgba(82, 133, 165, 0.4);
+  }
+
+  .select {
+    @apply rounded-xl border border-gray-200 px-3 py-2 text-sm bg-white;
+  }
+
+  .card {
+    @apply rounded-2xl bg-white border border-gray-200 shadow-card transition-shadow;
+  }
+  .card:hover {
+    @apply shadow-cardHover;
+  }
 }
 
-.btn-solid {
-  border-radius: 12px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  color: #fff;
-  background-color: #5285a5;
-  border: 1px solid #5285a5;
-  transition: opacity 0.15s ease;
-}
-.btn-solid:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-ghost {
-  border-radius: 12px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  color: #5285a5;
-  background: transparent;
-  border: 1px solid transparent;
-  transition: background-color 0.15s ease;
-}
-.btn-ghost:hover {
-  background-color: rgba(255, 255, 255, 0.7);
-}
-.btn-hero {
-  @apply rounded-full px-6 py-2 font-medium transition-colors duration-200
-       bg-white text-[#1B5071];
-}
-
-.btn-hero:hover,
-.btn-hero:focus {
-  @apply bg-[#1B5071] text-white;
-}
-
-.btn-hero:focus {
-  @apply outline-none ring-2 ring-[#5285A5];
-}
-
-.label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-}
-
-.input {
-  border-radius: 12px;
-  border: 1px solid #e5e7eb; /* gray-200 */
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  background: #fff;
-}
-.input:focus {
-  outline: none;
-  border-color: #5285a5;
-  box-shadow: 0 0 0 2px rgba(82, 133, 165, 0.4);
-}
-
-.select {
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  background: #fff;
-}
-
-.card {
-  border-radius: 16px;
-  background: #fff;
-  border: 1px solid #e5e7eb; /* gray-200 */
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.07);
-  transition: box-shadow 0.2s ease;
-}
-.card:hover {
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
-}
-
-/* index.css (eller global css) */
+/* ---- Utilities ---- */
 @layer utilities {
-  /* Skjul piler og gjør feltet "plain" på tvers av browsere */
   .no-spinner {
-    -moz-appearance: textfield; /* Firefox */
-    appearance: textfield; /* standard fallback */
+    -moz-appearance: textfield;
+    appearance: textfield;
   }
   .no-spinner::-webkit-outer-spin-button,
   .no-spinner::-webkit-inner-spin-button {
-    -webkit-appearance: none; /* Chrome/Safari/Edge */
+    -webkit-appearance: none;
     margin: 0;
   }
 }

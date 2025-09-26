@@ -75,11 +75,12 @@ export default function ProfileVenuesList({
                           </button>
                           <button
                             type="button"
-                            className="btn px-3 py-1 text-xs sm:text-sm text-red-700"
+                            className="btn-danger text-xs sm:text-sm px-3 py-1"
                             onClick={() => onDelete?.(v.id)}
                           >
                             Delete
                           </button>
+
                         </>
                       )}
                     </div>

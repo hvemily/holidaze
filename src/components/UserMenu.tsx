@@ -126,7 +126,8 @@ function MenuButton({
   const base =
     'w-full rounded-lg px-3 py-2 text-[13px] text-center border transition'
   const ghost = 'border-gray-200 text-gray-800 hover:bg-gray-50'
-  const filled = 'border-transparent bg-black text-white hover:opacity-90 btn-solid' // hvis du har btn-solid
+  const filled = 'border-transparent bg-holi-nav text-white hover:bg-holi-nav/90'
+
   return (
     <Link
       to={to}

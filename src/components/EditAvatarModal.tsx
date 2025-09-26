@@ -94,14 +94,21 @@ export default function EditAvatarModal({
           </div>
         )}
 
-        <div className="mt-2 flex items-center gap-2 justify-end">
-          <button type="button" className="btn" onClick={onClose} disabled={saving}>
-            Cancel
-          </button>
-          <button type="submit" className="btn-solid" disabled={saving} aria-busy={saving}>
-            {saving ? 'Saving…' : 'Update avatar'}
-          </button>
-        </div>
+<div className="mt-2 flex items-center gap-2 justify-end">
+  <button type="button" className="btn" onClick={onClose} disabled={saving}>
+    Cancel
+  </button>
+  <button
+    type="submit"
+    disabled={saving}
+    aria-busy={saving}
+    className="rounded-xl px-4 py-2 text-sm font-normal
+               text-white bg-holi-nav border border-holi-nav
+               hover:bg-holi-nav/90 disabled:opacity-50"
+  >
+    {saving ? 'Saving…' : 'Update avatar'}
+  </button>
+</div>
       </form>
     </Modal>
   )
