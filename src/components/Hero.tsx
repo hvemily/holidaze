@@ -1,16 +1,27 @@
+// src/components/Hero.tsx
+
+/**
+ * Hero section for the landing page.
+ * - Renders a large responsive Unsplash background image.
+ * - Uses srcSet + sizes for responsive loading.
+ * - Includes gradient overlay for text readability.
+ * - Provides a call-to-action link to scroll down to the venues list.
+ */
 export default function Hero() {
-  // base url uten w/q
+  // Base Unsplash image URL (without width/quality params).
   const base =
     'https://images.unsplash.com/photo-1664825381616-5cb8397fd9b1?auto=format&fit=crop&ixlib=rb-4.1.0'
 
   return (
     <section
       className="
-        relative h-[56vh] md:h-[68vh]
+        relative
+        h-[56vh] md:h-[68vh]
         w-screen
         ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]
       "
     >
+      {/* Responsive background image */}
       <img
         src={`${base}&w=1600&q=70`}
         srcSet={`
@@ -24,16 +35,26 @@ export default function Hero() {
         fetchPriority="high"
         decoding="async"
       />
+
+      {/* Gradient overlay for better contrast */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-black/40" />
+
+      {/* Foreground content */}
       <div className="relative z-10 flex h-full items-center justify-center px-4">
-        <div className="text-center text-white max-w-3xl mx-auto">
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
+        <div className="mx-auto max-w-3xl text-center text-white">
+          <h1 className="text-3xl font-extrabold tracking-tight md:text-5xl">
             Holidaze — Discover Norway
           </h1>
-          <p className="mt-3 text-sm md:text-lg text-white/90">
-            Find unique stays in fjords, mountains and vibrant cities across Norway.
+          <p className="mt-3 text-sm text-white/90 md:text-lg">
+            Find unique stays in fjords, mountains and vibrant cities across
+            Norway.
           </p>
-          <a href="#venues-list" className="inline-block mt-6 btn-hero">
+
+          {/* CTA link scrolls down to venues list */}
+          <a
+            href="#venues-list"
+            className="btn-hero mt-6 inline-block focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+          >
             Browse venues
           </a>
         </div>

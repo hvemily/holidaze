@@ -12,21 +12,26 @@ export type SortValue =
 export const COUNTRY = 'norway'
 export const LIMIT = 20
 
-// --- small utils ---
-const toNum = (v: unknown, fb = 0) =>
-  Number.isFinite(Number(v)) ? Number(v) : fb
+// Shared API response wrapper
+export type ApiResponse<T> = { data: T }
+
+// --- small helpers ---
+const toNum = (v: unknown, fb = 0) => {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : fb
+}
 const ts = (v?: string) => (v ? new Date(v).getTime() : 0)
 const tsCreatedUpdated = (v: Venue) => Math.max(ts(v.created), ts(v.updated))
 
-// Normaliserer både diakritikk og norske spesialtegn (æ/ø/å)
-// slik at "Tønsberg" også matcher "Tonsberg", osv.
+// Normalize diacritics and Norwegian special chars (æ/ø/å)
+// so "Tønsberg" also matches "Tonsberg", etc.
 const norm = (s?: string) => {
   if (!s) return ''
   return s
     .trim()
     .toLowerCase()
-    .normalize('NFD')                 // splitte diakritikk
-    .replace(/[\u0300-\u036f]/g, '')  // fjerne diakritiske merker
+    .normalize('NFD')                 // split diacritics
+    .replace(/[\u0300-\u036f]/g, '')  // remove marks
     .replace(/ø/g, 'o')
     .replace(/æ/g, 'ae')
     .replace(/å/g, 'a')
@@ -54,13 +59,9 @@ export function localSort(data: Venue[], sort: SortValue) {
     case 'created:asc':
       return arr.sort((a, b) => tsCreatedUpdated(a) - tsCreatedUpdated(b))
     case 'price:asc':
-      return arr.sort(
-        (a, b) => toNum(a.price, Infinity) - toNum(b.price, Infinity),
-      )
+      return arr.sort((a, b) => toNum(a.price, Infinity) - toNum(b.price, Infinity))
     case 'price:desc':
-      return arr.sort(
-        (a, b) => toNum(b.price, -Infinity) - toNum(a.price, -Infinity),
-      )
+      return arr.sort((a, b) => toNum(b.price, -Infinity) - toNum(a.price, -Infinity))
     case 'rating:desc':
       return arr.sort((a, b) => toNum(b.rating, 0) - toNum(a.rating, 0))
     default:
@@ -70,8 +71,8 @@ export function localSort(data: Venue[], sort: SortValue) {
 
 export async function fetchVenueById(id: string): Promise<Venue | null> {
   try {
-    const r = await api.get<{ data: Venue }>(
-      `/holidaze/venues/${encodeURIComponent(id)}`,
+    const r = await api.get<ApiResponse<Venue>>(
+      `/holidaze/venues/${encodeURIComponent(id)}`
     )
     return r?.data ?? null
   } catch {
@@ -80,10 +81,10 @@ export async function fetchVenueById(id: string): Promise<Venue | null> {
 }
 
 /**
- * Henter en side venues fra API.
- * Viktig: vi sender IKKE `q` til API – søket gjøres lokalt via matchesQuery().
+ * Fetch one page of venues from the API.
+ * Note: we do NOT send `q` to the API – filtering is done locally.
  */
-export async function fetchPage(page: number, sort: SortValue) {
+export async function fetchPage(page: number, sort: SortValue): Promise<Venue[]> {
   const [field, order] = sort.split(':') as [string, 'asc' | 'desc']
   const params = new URLSearchParams()
   params.set('limit', String(LIMIT))
@@ -92,26 +93,26 @@ export async function fetchPage(page: number, sort: SortValue) {
   params.set('sortOrder', order)
 
   try {
-    const res = await api.get<{ data: Venue[] }>(
-      `/holidaze/venues?${params.toString()}`,
+    const res = await api.get<ApiResponse<Venue[]>>(
+      `/holidaze/venues?${params.toString()}`
     )
     return res.data || []
   } catch {
-    // fallback uten sort
+    // fallback without sort
     const p2 = new URLSearchParams()
     p2.set('limit', String(LIMIT))
     p2.set('page', String(page))
-    const res = await api.get<{ data: Venue[] }>(
-      `/holidaze/venues?${p2.toString()}`,
+    const res = await api.get<ApiResponse<Venue[]>>(
+      `/holidaze/venues?${p2.toString()}`
     )
     return res.data || []
   }
 }
 
-// Finner UUID inne i tekst (slug/URL/clipboard)
+// Extract a UUID inside arbitrary input (slug, URL, clipboard text)
 export function extractUuid(input: string): string | null {
   const m = input.match(
-    /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/,
+    /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/
   )
   return m ? m[0].toLowerCase() : null
 }
@@ -120,7 +121,7 @@ export const SORT_OPTIONS: Array<{ value: SortValue; label: string }> = [
   { value: 'created:desc', label: 'Newest first' },
   { value: 'created:asc', label: 'Oldest first' },
   { value: 'price:asc', label: 'Price • Low → High' },
-  { value: 'price:desc', label: 'Price • High • Low' },
+  { value: 'price:desc', label: 'Price • High → Low' },
   { value: 'rating:desc', label: 'Rating' },
 ]
 
@@ -128,15 +129,15 @@ export const SORT_OPTIONS: Array<{ value: SortValue; label: string }> = [
 
 export async function fetchBookingsForVenue(venueId: string): Promise<Booking[]> {
   try {
-    // Primært: hent bookinger for dette venue-id'et
-    const res = await api.get<{ data: Booking[] }>(
+    // Primary: fetch bookings by venueId
+    const res = await api.get<ApiResponse<Booking[]>>(
       `/holidaze/bookings?venueId=${encodeURIComponent(venueId)}&limit=200`
     )
     return res.data || []
   } catch {
-    // Fallback: noen Noroff-instansar støtter _bookings=true på venue-detalj
+    // Fallback: some Noroff instances support `_bookings=true` on venue detail
     try {
-      const res = await api.get<{ data: { bookings?: Booking[] } }>(
+      const res = await api.get<ApiResponse<Venue>>(
         `/holidaze/venues/${encodeURIComponent(venueId)}?_bookings=true`
       )
       return res?.data?.bookings || []
@@ -147,8 +148,8 @@ export async function fetchBookingsForVenue(venueId: string): Promise<Booking[]>
 }
 
 /**
- * Sjekk om to halvåpne intervaller [from, to) overlapper.
- * Tolkning: check-out-dagen er ledig (to er eksklusiv).
+ * Check if two half-open ranges [from, to) overlap.
+ * Interpretation: check-out day is available (to is exclusive).
  */
 export function rangesOverlap(aFrom: string, aTo: string, bFrom: string, bTo: string) {
   const A1 = new Date(aFrom).getTime()

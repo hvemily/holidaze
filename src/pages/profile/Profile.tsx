@@ -18,11 +18,18 @@ type RouteParams = { name: string }
 type BookingEx = Booking & { customer?: { name?: string } }
 type VenueWithBookings = Venue & { bookings?: BookingEx[] }
 
+/**
+ * Profile page
+ * - Loads profile, venues and bookings via `useProfileData(name)`.
+ * - If viewing own profile (`isSelf`): can edit avatar, create/edit/delete venues.
+ * - Shows upcoming bookings:
+ *   - For venue managers viewing their own profile: aggregates across owned venues.
+ *   - Otherwise: shows the user's own bookings (`ProfileBookings`).
+ */
 export default function Profile() {
   const { name } = useParams<RouteParams>()
   const { user } = useAuth()
-  const { profile, bookings, venues, setVenues, loading, error, setProfile } =
-    useProfileData(name)
+  const { profile, bookings, venues, setVenues, loading, error, setProfile } = useProfileData(name)
   const { success: toastSuccess, error: toastError } = useToast()
 
   const isSelf =
@@ -34,24 +41,30 @@ export default function Profile() {
   const [saving, setSaving] = useState(false)
   const [openEditProfile, setOpenEditProfile] = useState(false)
 
-  // Delete confirm
+  // Delete flow
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  // Når profilen er venue manager: hent venues med _bookings=true så vi kan vise kommende bookinger
+  useEffect(() => {
+  if (profile?.name) {
+    document.title = `Holidaze | ${profile.name}`
+  } else {
+    document.title = "Holidaze | Profile"
+  }
+}, [profile?.name])
+
+
+  // When the profile is a venue manager: fetch venues with `_bookings=true` for upcoming list
   useEffect(() => {
     if (!loading && profile?.venueManager && name) {
       ;(async () => {
         try {
           const res = await api.get<{ data: Venue[] }>(
-            `/holidaze/profiles/${encodeURIComponent(
-              name
-            )}/venues?sort=created&limit=50&_bookings=true`
+            `/holidaze/profiles/${encodeURIComponent(name)}/venues?sort=created&limit=50&_bookings=true`
           )
           setVenues(res.data || [])
         } catch (e: unknown) {
-          const msg =
-            e instanceof Error ? e.message : 'Failed to load venues with bookings'
+          const msg = e instanceof Error ? e.message : 'Failed to load venues with bookings'
           toastError(msg)
         }
       })()
@@ -60,15 +73,25 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <section className="grid place-items-center py-16">
+      <section className="grid place-items-center py-16" aria-busy="true" aria-live="polite">
         <Spinner />
       </section>
     )
   }
-  if (error) return <p className="text-red-600">{error}</p>
+  if (error) {
+    return (
+      <p className="text-red-600" role="alert" aria-live="polite">
+        {error}
+      </p>
+    )
+  }
   if (!profile || !name) return <p>Profile not found.</p>
 
-  const safeName = name as string
+  const safeName = name
+
+  
+
+  // ---- helpers --------------------------------------------------------------
 
   async function refreshVenues() {
     try {
@@ -136,40 +159,34 @@ export default function Profile() {
   }
 
   // --- Upcoming bookings across my venues (for venue managers) ---
-  const today0 = new Date()
-  today0.setHours(0, 0, 0, 0)
+  const today0 = new Date(); today0.setHours(0, 0, 0, 0)
   const fmt: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
 
-  const upcomingAcrossVenues: Array<
-    BookingEx & { venueId: string; venueName: string }
-  > = profile.venueManager
-    ? (venues as VenueWithBookings[])
-        .flatMap(v =>
-          (v.bookings ?? [])
-            .filter(b => new Date(b.dateTo).getTime() >= today0.getTime())
-            .map(b => ({ ...b, venueId: v.id, venueName: v.name }))
-        )
-        .sort(
-          (a, b) =>
-            new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime()
-        )
-    : []
+  const upcomingAcrossVenues: Array<BookingEx & { venueId: string; venueName: string }> =
+    profile.venueManager
+      ? (venues as VenueWithBookings[])
+          .flatMap(v =>
+            (v.bookings ?? [])
+              .filter(b => new Date(b.dateTo).getTime() >= today0.getTime())
+              .map(b => ({ ...b, venueId: v.id, venueName: v.name }))
+          )
+          .sort((a, b) => new Date(a.dateFrom).getTime() - new Date(b.dateFrom).getTime())
+      : []
+
+  // ---- render ---------------------------------------------------------------
 
   return (
-    <section className="py-6 sm:py-8 grid gap-6">
-      {/* Header med banner + avatar */}
+    <section className="grid gap-6 py-6 sm:py-8">
+      {/* Header with banner + avatar */}
       <ProfileHeader profile={profile} />
 
-      {/* Handlinger under header – grid på mobil, inline fra sm */}
+      {/* Actions under header – grid on mobile, inline on ≥sm */}
       <div className="flex justify-center">
         <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-flex sm:gap-3">
           {isSelf && (
             <button
               type="button"
-              className="rounded-full w-full sm:w-auto
-                         px-4 py-2 text-sm font-normal
-                         text-white bg-holi-nav border border-holi-nav
-                         hover:bg-holi-nav/90"
+              className="w-full rounded-full border border-holi-nav bg-holi-nav px-4 py-2 text-sm font-normal text-white hover:bg-holi-nav/90 sm:w-auto"
               onClick={() => setOpenEditProfile(true)}
             >
               Edit profile
@@ -178,7 +195,7 @@ export default function Profile() {
           {isSelf && profile.venueManager && (
             <button
               type="button"
-              className="btn rounded-full w-full sm:w-auto"
+              className="btn w-full rounded-full sm:w-auto"
               onClick={() => setOpenCreate(true)}
             >
               New venue
@@ -187,11 +204,12 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* To kort: My venues + Bookings */}
+      {/* Two cards: My venues + Bookings */}
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
-          <div className="px-4 sm:px-5 py-3 sm:py-4 border-b">
-            <h2 className="text-base sm:text-lg font-semibold">My venues</h2>
+        {/* My venues */}
+        <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+          <div className="border-b px-4 py-3 sm:px-5 sm:py-4">
+            <h2 className="text-base font-semibold sm:text-lg">My venues</h2>
           </div>
           <div className="p-3 sm:p-4">
             {profile.venueManager ? (
@@ -208,9 +226,10 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
-          <div className="px-4 sm:px-5 py-3 sm:py-4 border-b">
-            <h2 className="text-base sm:text-lg font-semibold">Upcoming bookings</h2>
+        {/* Bookings */}
+        <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+          <div className="border-b px-4 py-3 sm:px-5 sm:py-4">
+            <h2 className="text-base font-semibold sm:text-lg">Upcoming bookings</h2>
           </div>
           <div className="p-3 sm:p-4">
             {profile.venueManager && isSelf ? (
@@ -220,12 +239,12 @@ export default function Profile() {
                     const d1 = new Date(b.dateFrom)
                     const d2 = new Date(b.dateTo)
                     return (
-                      <li key={b.id} className="p-3 flex items-center justify-between gap-4">
+                      <li key={b.id} className="flex items-center justify-between gap-4 p-3">
                         <div className="min-w-0">
-                          <p className="font-medium truncate">
+                          <p className="truncate font-medium">
                             {d1.toLocaleDateString(undefined, fmt)} → {d2.toLocaleDateString(undefined, fmt)}
                           </p>
-                          <p className="text-sm text-gray-600 truncate">
+                          <p className="truncate text-sm text-gray-600">
                             {b.guests} guest{(b.guests || 1) === 1 ? '' : 's'}
                             {b.customer?.name ? <> · {b.customer.name}</> : null}
                             {' · '}
@@ -247,19 +266,27 @@ export default function Profile() {
       </div>
 
       {/* Create venue modal */}
-      <Modal open={openCreate} onClose={() => setOpenCreate(false)} title="Create venue">
+      <Modal
+        open={openCreate}
+        onClose={saving ? () => {} : () => setOpenCreate(false)}
+        title="Create venue"
+      >
         <VenueForm submitting={saving} onSubmit={handleCreate} />
       </Modal>
 
       {/* Edit venue modal */}
-      <Modal open={!!editing} onClose={() => setEditing(null)} title="Edit venue">
+      <Modal
+        open={!!editing}
+        onClose={saving ? () => {} : () => setEditing(null)}
+        title="Edit venue"
+      >
         {editing && <VenueForm initial={editing} submitting={saving} onSubmit={handleEdit} />}
       </Modal>
 
       {/* Delete confirm modal */}
       <Modal
         open={!!confirmDeleteId}
-        onClose={() => (deleting ? null : setConfirmDeleteId(null))}
+        onClose={deleting ? () => {} : () => setConfirmDeleteId(null)}
         title="Delete venue?"
       >
         <div className="grid gap-3">

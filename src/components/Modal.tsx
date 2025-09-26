@@ -4,6 +4,16 @@ import { useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 
+/**
+ * Accessible modal dialog component.
+ *
+ * Features:
+ * - Locks body scroll while open.
+ * - Closes on `Escape` key or overlay click.
+ * - Uses React portal to render into <body>.
+ * - Supports optional title (linked via aria-labelledby).
+ * - Panel has its own scroll with max-height.
+ */
 export default function Modal({
   open,
   onClose,
@@ -19,13 +29,14 @@ export default function Modal({
 }) {
   const titleId = useId()
 
-  // ESC to close + lock body scroll while open
   useEffect(() => {
     if (!open) return
 
+    // Save current body overflow setting
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
+    // Close on ESC key
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
@@ -50,20 +61,24 @@ export default function Modal({
       <div
         className="absolute inset-0 bg-black/40"
         onClick={onClose}
+        aria-hidden="true"
       />
 
-      {/* Panel wrapper – stop click bubbling */}
-      <div className="relative z-10 mx-4 w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
-        {/* Panel: max-h + egen scroll */}
+      {/* Panel wrapper – prevents overlay click bubbling */}
+      <div
+        className="relative z-10 mx-4 w-full max-w-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Panel: max-h + own scroll */}
         <div
           className={clsx(
-            'rounded-2xl bg-white shadow-lg border',
+            'border rounded-2xl bg-white p-4 shadow-lg',
             'max-h-[85vh] overflow-y-auto overscroll-contain',
-            'p-4',
             className
           )}
         >
-          <div className="flex items-center justify-between mb-3">
+          {/* Header */}
+          <div className="mb-3 flex items-center justify-between">
             {title && (
               <h3 id={titleId} className="text-lg font-semibold">
                 {title}
@@ -71,13 +86,15 @@ export default function Modal({
             )}
             <button
               onClick={onClose}
-              className="rounded-md border px-2 py-1 text-sm"
+              className="rounded-md border px-2 py-1 text-sm transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-label="Close modal"
+              type="button"
             >
               Close
             </button>
           </div>
 
+          {/* Content */}
           {children}
         </div>
       </div>

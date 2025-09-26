@@ -5,8 +5,14 @@ import RatingStars from '@/components/RatingStars'
 
 type Props = { venue: Venue }
 
+/**
+ * Compact card for a venue.
+ * - Clickable wrapper navigates to venue detail.
+ * - Shows cover image, name, rating, location and price.
+ */
 export default function VenueCard({ venue: v }: Props) {
   const img = v.media?.[0]?.url ?? 'https://picsum.photos/seed/holidaze/640/480'
+  const alt = v.media?.[0]?.alt ?? v.name
   const city = v.location?.city || 'Unknown city'
   const country = v.location?.country || 'Unknown country'
   const price = Number(v.price) || 0
@@ -15,22 +21,25 @@ export default function VenueCard({ venue: v }: Props) {
     <Link
       to={`/venues/${v.id}`}
       className="
-        group block rounded-2xl overflow-hidden bg-white shadow border
+        group block overflow-hidden rounded-2xl border bg-white shadow
         transform transition duration-200
-        hover:shadow-lg hover:scale-[1.02]
-        focus:outline-none focus:ring-2 focus:ring-[#5285A5]
+        hover:scale-[1.02] hover:shadow-lg
+        focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5285A5]
       "
-      aria-label={`${v.name} in ${city}, ${country} — $${price} per night. View details.`}
+      title={`${v.name} — ${city}, ${country}`}
     >
+      {/* Cover image */}
       <img
         src={img}
-        alt={v.media?.[0]?.alt ?? v.name}
+        alt={alt}
         className="h-48 w-full object-cover transition group-hover:opacity-95"
         loading="lazy"
+        decoding="async"
+        sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
       />
 
-      <div className="p-4 grid gap-2">
-        <h3 className="font-semibold line-clamp-1 text-[#1B5071] group-hover:underline">
+      <div className="grid gap-2 p-4">
+        <h3 className="line-clamp-1 font-semibold text-[#1B5071] group-hover:underline">
           {v.name}
         </h3>
 
@@ -44,9 +53,7 @@ export default function VenueCard({ venue: v }: Props) {
 
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium">${price} /night</span>
-          <span className="text-xs text-[#5285A5]">
-            View details →
-          </span>
+          <span className="text-xs text-[#5285A5]">View details →</span>
         </div>
       </div>
     </Link>

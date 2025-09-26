@@ -1,16 +1,23 @@
 // src/utils/types.ts
-export type Media = { url: string; alt?: string }
-export type VenueMedia = { url: string; alt?: string }
 
+/** Generic media item (image/video/etc.) */
+export type Media = {
+  url: string
+  alt?: string
+}
+
+/** User profile object (Noroff v2) */
 export type Profile = {
   name: string
   email: string
   avatar?: Media
   banner?: Media
   venueManager?: boolean
+  /** Access token is only present when logging in */
   accessToken?: string
 }
 
+/** Venue location fields (not all are always set) */
 export type VenueLocation = {
   address?: string
   city?: string
@@ -19,12 +26,14 @@ export type VenueLocation = {
   continent?: string
 }
 
+/** Owner data attached to a Venue */
 export type VenueOwner = {
   name: string
   email: string
-  avatar?: VenueMedia
+  avatar?: Media
 }
 
+/** Extra metadata about a Venue */
 export type VenueMeta = {
   wifi?: boolean
   parking?: boolean
@@ -32,30 +41,37 @@ export type VenueMeta = {
   pets?: boolean
 }
 
+/** Venue object */
 export type Venue = {
   id: string
   name: string
   description?: string
-  media: VenueMedia[]
-  bookings?: Booking[]
+  media: Media[]
   price: number
   rating?: number
-  created: string
-  updated: string
+  maxGuests?: number
+
   location?: VenueLocation
   owner?: VenueOwner
-  _count?: { bookings: number }
   meta?: VenueMeta
-  maxGuests?: number
+
+  /** Bookings are only present when explicitly requested with `_bookings=true` */
+  bookings?: Booking[]
+  _count?: { bookings: number }
+
+  created: string
+  updated: string
 }
 
-
+/** Booking object */
 export type Booking = {
   id: string
   dateFrom: string
   dateTo: string
   guests: number
+
   venueId?: string
   venue?: Venue
+
   created?: string
 }

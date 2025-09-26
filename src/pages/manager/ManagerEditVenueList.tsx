@@ -9,9 +9,15 @@ import { useToast } from '@/components/Toast'
 
 type RouteParams = { id: string }
 
+/**
+ * Edit page for a specific venue.
+ * - Loads venue by :id
+ * - Submits updates to `/holidaze/venues/:id`
+ * - Shows toasts for success/error
+ */
 export default function ManagerEditVenue() {
   const { id } = useParams<RouteParams>()
-  const nav = useNavigate()
+  const navigate = useNavigate()
   const { error: toastError, success: toastSuccess } = useToast()
 
   const [venue, setVenue] = useState<Venue | null>(null)
@@ -19,6 +25,7 @@ export default function ManagerEditVenue() {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
+  // Fetch venue details
   useEffect(() => {
     let ignore = false
 
@@ -34,14 +41,15 @@ export default function ManagerEditVenue() {
       try {
         setLoading(true)
         setErr(null)
+
         const res = await api.get<{ data: Venue }>(
           `/holidaze/venues/${encodeURIComponent(id)}`
         )
+
         if (!ignore) setVenue(res.data ?? null)
-      } catch (error: unknown) {
+      } catch (e: unknown) {
         if (!ignore) {
-          const msg =
-            error instanceof Error ? error.message : 'Failed to load venue'
+          const msg = e instanceof Error ? e.message : 'Failed to load venue'
           setErr(msg)
           toastError(msg)
         }
@@ -50,21 +58,21 @@ export default function ManagerEditVenue() {
       }
     })()
 
-    return () => {
-      ignore = true
-    }
+    return () => { ignore = true }
   }, [id, toastError])
 
+  // Save handler
   async function handleSave(payload: VenuePayload) {
     if (!id) return
+
     setSaving(true)
     setErr(null)
     try {
       await api.put(`/holidaze/venues/${encodeURIComponent(id)}`, payload)
       toastSuccess('Venue updated')
-      nav(`/venues/${encodeURIComponent(id)}`)
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Failed to save venue'
+      navigate(`/venues/${encodeURIComponent(id)}`)
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Failed to save venue'
       setErr(msg)
       toastError(msg)
     } finally {
@@ -74,14 +82,23 @@ export default function ManagerEditVenue() {
 
   if (loading) {
     return (
-      <section className="grid place-items-center py-16">
+      <section className="grid place-items-center py-16" aria-busy="true" aria-live="polite">
         <Spinner />
       </section>
     )
   }
 
-  if (err) return <p className="text-red-600">{err}</p>
-  if (!venue) return <p>Venue not found.</p>
+  if (err) {
+    return (
+      <p className="text-red-600" role="alert" aria-live="polite">
+        {err}
+      </p>
+    )
+  }
+
+  if (!venue) {
+    return <p>Venue not found.</p>
+  }
 
   return (
     <section className="grid gap-4">

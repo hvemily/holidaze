@@ -1,14 +1,27 @@
+// src/components/RatingStars.tsx
 import { useId } from 'react'
 import clsx from 'clsx'
 
 type Props = {
-  value?: number            // 0–5 (desimal støttes)
-  outOf?: number            // default 5
-  showNumber?: boolean      // vis 4.0
-  size?: 'sm' | 'md' | 'lg' // ikonstørrelse
+  /** Rating value, supports decimals. Defaults to 0. */
+  value?: number
+  /** Maximum possible rating (default 5). */
+  outOf?: number
+  /** Whether to show numeric rating beside the stars. */
+  showNumber?: boolean
+  /** Size of the star icons. */
+  size?: 'sm' | 'md' | 'lg'
+  /** Optional extra CSS classes for the wrapper. */
   className?: string
 }
 
+/**
+ * Renders a row of star icons with partial fills to represent ratings.
+ *
+ * - Uses `<linearGradient>` with unique IDs for partial fill.
+ * - Accepts decimal ratings, rounded to 1 decimal.
+ * - Accessible: adds `aria-label` with the score.
+ */
 export default function RatingStars({
   value = 0,
   outOf = 5,
@@ -16,24 +29,35 @@ export default function RatingStars({
   size = 'sm',
   className,
 }: Props) {
-  // clamp og rund til 1 desimal for stabil rendering
+  // Clamp value between 0 and outOf, round to 1 decimal for stable rendering
   const clamped = Math.max(0, Math.min(outOf, Number(value) || 0))
   const rounded = Math.round(clamped * 10) / 10
 
-  const sizeCls = size === 'lg' ? 'h-6 w-6' : size === 'md' ? 'h-5 w-5' : 'h-4 w-4'
+  // Tailwind size class per prop
+  const sizeCls =
+    size === 'lg' ? 'h-6 w-6' : size === 'md' ? 'h-5 w-5' : 'h-4 w-4'
+
   const uid = useId()
 
-  // prosent fyll for stjerne i = 0..outOf-1
+  /**
+   * Compute fill percentage for star index `i`.
+   * Example: if value=3.4 → star[0..2] = 100%, star[3] = 40%, star[4] = 0%.
+   */
   const fillPct = (i: number) => {
-    const s = rounded - i                   // hvor mye av denne stjernen som skal fylles
-    const p = Math.max(0, Math.min(1, s))   // 0..1
-    return Math.round(p * 1000) / 10        // prosent med én desimal (0.0–100.0)
+    const s = rounded - i // how much of this star is filled
+    const p = Math.max(0, Math.min(1, s)) // clamp 0..1
+    return Math.round(p * 1000) / 10 // percentage with 1 decimal
   }
 
+  /** Star component with gradient fill. */
   const Star = ({ pct }: { pct: number }) => {
     const gradId = `${uid}-grad-${pct}`
     return (
-      <svg viewBox="0 0 20 20" className={clsx(sizeCls)} aria-hidden="true">
+      <svg
+        viewBox="0 0 20 20"
+        className={clsx(sizeCls)}
+        aria-hidden="true"
+      >
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#facc15" />
@@ -42,12 +66,12 @@ export default function RatingStars({
             <stop offset="100%" stopColor="transparent" />
           </linearGradient>
         </defs>
-        {/* base (grå) */}
+        {/* Base (gray) */}
         <path
           fill="#d1d5db"
           d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.2 3.698a1 1 0 00.95.69h3.887c.967 0 1.371 1.24.588 1.81l-3.146 2.286a1 1 0 00-.364 1.118l1.2 3.698c.3.921-.755 1.688-1.54 1.118L10 14.347l-3.726 2.698c-.784.57-1.838-.197-1.539-1.118l1.2-3.698a1 1 0 00-.364-1.118L2.425 9.125c-.783-.57-.38-1.81.588-1.81h3.887a1 1 0 00.95-.69l1.2-3.698z"
         />
-        {/* fyll (gul) – klippes pr stjerne */}
+        {/* Filled portion (yellow) */}
         <path
           fill={`url(#${gradId})`}
           d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.2 3.698a1 1 0 00.95.69h3.887c.967 0 1.371 1.24.588 1.81l-3.146 2.286a1 1 0 00-.364 1.118l1.2 3.698c.3.921-.755 1.688-1.54 1.118L10 14.347l-3.726 2.698c-.784.57-1.838-.197-1.539-1.118l1.2-3.698a1 1 0 00-.364-1.118L2.425 9.125c-.783-.57-.38-1.81.588-1.81h3.887a1 1 0 00.95-.69l1.2-3.698z"
@@ -58,12 +82,20 @@ export default function RatingStars({
 
   return (
     <div className={clsx('inline-flex items-center gap-1', className)}>
-      <div className="flex gap-1" aria-label={`${rounded.toFixed(1)} out of ${outOf} stars`}>
+      <div
+        className="flex gap-1"
+        role="img"
+        aria-label={`${rounded.toFixed(1)} out of ${outOf} stars`}
+      >
         {Array.from({ length: outOf }).map((_, i) => (
           <Star key={i} pct={fillPct(i)} />
         ))}
       </div>
-      {showNumber && <span className="ml-1 text-xs text-gray-600">{rounded.toFixed(1)}</span>}
+      {showNumber && (
+        <span className="ml-1 text-xs text-gray-600">
+          {rounded.toFixed(1)}
+        </span>
+      )}
     </div>
   )
 }

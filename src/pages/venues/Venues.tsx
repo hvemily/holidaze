@@ -22,6 +22,12 @@ import {
   rangesOverlap,
 } from '@/utils/venues'
 
+/**
+ * Venues page
+ * - Loads venues (paged), supports text query, date range, guests, and sorting.
+ * - If query looks like a direct ID/UUID, tries fetching that venue first.
+ * - Optionally fetches bookings per visible venue to check date availability.
+ */
 export default function Venues() {
   // Filters
   const [q, setQ] = useState('')
@@ -48,7 +54,7 @@ export default function Venues() {
 
   const { error: toastError } = useToast()
 
-  // ------- Fetch første side (eller ID-treff) -------
+  // ------- Initial fetch (or direct ID/UUID hit) -------
   useEffect(() => {
     let mounted = true
     ;(async () => {
@@ -61,24 +67,24 @@ export default function Venues() {
         setIdHit(false)
         setBookingsByVenue({})
 
+        // Reset/replace pending controller (in case helpers accept a signal)
         abortRef.current?.abort()
         const ac = new AbortController()
         abortRef.current = ac
 
         const qTrim = debouncedQ.trim()
 
-        // Direkte ID/UUID-søk
+        // 1) Direct ID/UUID search
         if (qTrim) {
           const direct = await fetchVenueById(qTrim)
           if (direct) {
+            if (!mounted) return
             if (inNorway(direct)) {
-              if (!mounted) return
               setItems(localSort([direct], sort))
               setHasMore(false)
               setIdHit(true)
               return
             } else {
-              if (!mounted) return
               const msg = 'That venue exists, but it is not in Norway.'
               setItems([])
               setHasMore(false)
@@ -87,18 +93,21 @@ export default function Venues() {
               return
             }
           }
+
+
+
+          // Try extracting UUID from query
           const uuid = extractUuid(qTrim)
           if (uuid) {
             const byUuid = await fetchVenueById(uuid)
+            if (!mounted) return
             if (byUuid) {
               if (inNorway(byUuid)) {
-                if (!mounted) return
                 setItems(localSort([byUuid], sort))
                 setHasMore(false)
                 setIdHit(true)
                 return
               } else {
-                if (!mounted) return
                 const msg = 'That venue exists, but it is not in Norway.'
                 setItems([])
                 setHasMore(false)
@@ -107,7 +116,6 @@ export default function Venues() {
                 return
               }
             } else {
-              if (!mounted) return
               const msg = 'No venue found with that ID.'
               setItems([])
               setHasMore(false)
@@ -118,7 +126,7 @@ export default function Venues() {
           }
         }
 
-        // Vanlig list: kun første side (kjapp)
+        // 2) Regular list: first page
         const first = await fetchPage(1, sort)
         if (!mounted) return
         setItems(localSort(first, sort))
@@ -132,7 +140,11 @@ export default function Venues() {
         if (mounted) setLoading(false)
       }
     })()
-    return () => { mounted = false; abortRef.current?.abort() }
+
+    return () => {
+      mounted = false
+      abortRef.current?.abort()
+    }
   }, [debouncedQ, sort, toastError])
 
   // ------- Load more -------
@@ -155,6 +167,7 @@ export default function Venues() {
       toastError(msg)
     } finally {
       setLoading(false)
+      // Keep the "Load more" button from jumping
       await new Promise<void>(r => requestAnimationFrame(() => r()))
       const afterTop = anchor ? anchor.getBoundingClientRect().top : 0
       const delta = afterTop - beforeTop
@@ -164,7 +177,12 @@ export default function Venues() {
     }
   }
 
-  // ------- Availability fetch når datoer settes -------
+  useEffect(() => {
+  document.title = "Holidaze | Home"
+}, [])
+
+
+  // ------- Availability fetch when dates are set -------
   useEffect(() => {
     if (!checkIn || !checkOut) return
     const missing = items.map(v => v.id).filter(id => !(id in bookingsByVenue))
@@ -174,6 +192,7 @@ export default function Venues() {
     setLoadingAvail(true)
     ;(async () => {
       try {
+        // Chunk to avoid hammering the API
         const chunkSize = 8
         for (let i = 0; i < missing.length; i += chunkSize) {
           const slice = missing.slice(i, i + chunkSize)
@@ -201,7 +220,7 @@ export default function Venues() {
     return () => { cancelled = true }
   }, [checkIn, checkOut, items, bookingsByVenue, toastError])
 
-  // ------- Tilgjengelighets-sjekk (memoisert) -------
+  // ------- Availability check (memoized) -------
   const isAvailable = useCallback((v: Venue): boolean => {
     if (!checkIn || !checkOut) return true
     const list = bookingsByVenue[v.id]
@@ -209,7 +228,7 @@ export default function Venues() {
     return !list.some(b => rangesOverlap(checkIn, checkOut, b.dateFrom, b.dateTo))
   }, [checkIn, checkOut, bookingsByVenue])
 
-  // ------- Synlige kort -------
+  // ------- Visible cards -------
   const visible = useMemo(() => {
     if (idHit) return items
     const qTrim = debouncedQ.trim()
@@ -225,7 +244,7 @@ export default function Venues() {
     <>
       <Hero />
 
-      <section id="venues-list" className="grid gap-6 max-w-7xl mx-auto px-4 py-8">
+      <section id="venues-list" className="mx-auto grid max-w-7xl gap-6 px-4 py-8">
         <VenueFilters
           q={q}
           onQChange={setQ}
@@ -241,7 +260,7 @@ export default function Venues() {
           }}
         />
 
-        <div className="flex items-center gap-2 justify-end">
+        <div className="flex items-center justify-end gap-2">
           <label className="text-sm text-gray-600" htmlFor="sort">Sort</label>
           <select
             id="sort"
@@ -258,23 +277,27 @@ export default function Venues() {
         </div>
 
         {/* Error */}
-        {error && <p className="text-red-600">{error}</p>}
+        {error && (
+          <p className="text-red-600" role="alert" aria-live="polite">
+            {error}
+          </p>
+        )}
 
-        {/* Resultat-teller for a11y */}
+        {/* SR-only result counter */}
         <p className="sr-only" aria-live="polite">
           {visible.length} venue{visible.length === 1 ? '' : 's'} found
         </p>
 
-        {/* Ingen funn */}
+        {/* Empty state (only when a query exists) */}
         {!loading && !loadingAvail && !error && debouncedQ && visible.length === 0 && (
           <p className="text-gray-600">No venues found.</p>
         )}
 
-        {/* Skeletons */}
+        {/* Skeletons for initial load */}
         {loading && !error && items.length === 0 && (
-          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4" aria-busy="true">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden bg-white shadow border p-4">
+              <div key={i} className="overflow-hidden rounded-2xl border bg-white p-4 shadow">
                 <Skeleton height={140} />
                 <div className="mt-3 space-y-2">
                   <Skeleton height={20} width="70%" />
@@ -286,7 +309,7 @@ export default function Venues() {
           </div>
         )}
 
-        {/* Liste */}
+        {/* List */}
         {visible.length > 0 && (
           <>
             <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
@@ -301,6 +324,7 @@ export default function Venues() {
                   className="btn"
                   aria-label="Load more venues"
                   disabled={loading}
+                  aria-busy={loading}
                 >
                   {loading ? 'Loading…' : 'Load more'}
                 </button>
@@ -320,7 +344,7 @@ export default function Venues() {
   )
 }
 
-/* debounce hook */
+/** Debounce a changing value by `delay` ms. */
 function useDebouncedValue<T>(value: T, delay = 300) {
   const [debounced, setDebounced] = useState(value)
   useEffect(() => {

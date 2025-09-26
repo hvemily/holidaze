@@ -4,9 +4,16 @@ import { Link } from 'react-router-dom'
 import type { Booking } from '@/utils/types'
 import { api } from '@/utils/api'
 import Modal from '@/components/Modal'
-import { useToast } from './Toast'
+import { useToast } from '@/components/Toast' // fixed path
 import Spinner from '@/components/Spinner'
 
+/**
+ * List of the user's bookings with edit & cancel flows.
+ *
+ * - Edit opens a modal with basic validation (dates + guests).
+ * - Cancel uses an optimistic update with rollback on failure.
+ * - Uses toasts to provide feedback.
+ */
 export default function ProfileBookings({ bookings: initial }: { bookings: Booking[] }) {
   const [bookings, setBookings] = useState<Booking[]>(initial)
   const [editing, setEditing] = useState<Booking | null>(null)
@@ -28,19 +35,23 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
 
   async function confirmCancel() {
     if (!confirmId) return
+
+    // keep a snapshot for rollback
     const prev = bookings
     setDeleting(true)
 
-    // Optimistisk fjern
-    setBookings(b => b.filter(x => x.id !== confirmId))
+    // optimistic remove
+    setBookings((b) => b.filter((x) => x.id !== confirmId))
+
     try {
       await api.delete(`/holidaze/bookings/${encodeURIComponent(confirmId)}`)
       toastSuccess('Booking cancelled')
       setConfirmId(null)
     } catch (err) {
-      // Revert ved feil
+      // rollback on error
       setBookings(prev)
-      const msg = err instanceof Error ? err.message : 'Failed to cancel booking. Please try again.'
+      const msg =
+        err instanceof Error ? err.message : 'Failed to cancel booking. Please try again.'
       toastError(msg)
     } finally {
       setDeleting(false)
@@ -54,12 +65,13 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
   async function saveEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!editing) return
+
     const form = new FormData(e.currentTarget)
     const dateFrom = (form.get('dateFrom') as string)?.trim()
     const dateTo = (form.get('dateTo') as string)?.trim()
     const guests = Number(form.get('guests') || 1)
 
-    // enkel validering + toasts
+    // basic validation + toasts
     if (!dateFrom || !dateTo) {
       toastError('Please choose dates.')
       return
@@ -83,12 +95,14 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
           guests,
         }
       )
-      // Oppdater i lista
-      setBookings(list => list.map(b => (b.id === editing.id ? { ...b, ...data } : b)))
+
+      // merge the updated booking back into the list
+      setBookings((list) => list.map((b) => (b.id === editing.id ? { ...b, ...data } : b)))
       setEditing(null)
       toastSuccess('Booking updated')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to update booking. Please try again.'
+      const msg =
+        err instanceof Error ? err.message : 'Failed to update booking. Please try again.'
       toastError(msg)
     } finally {
       setSaving(false)
@@ -105,40 +119,52 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
                 {b.venue?.name || 'Venue'} · {formatDateRange(b.dateFrom, b.dateTo)}
               </div>
               <div className="flex items-center gap-3">
-                <Link to={`/venues/${b.venue?.id || ''}`} className="text-sm underline">
+                <Link
+                  to={`/venues/${b.venue?.id || ''}`}
+                  className="text-sm underline"
+                  title="View venue"
+                >
                   View
                 </Link>
                 <button
                   onClick={() => startEdit(b)}
-                  className="text-sm rounded border px-3 py-1"
+                  className="rounded border px-3 py-1 text-sm"
                   disabled={deleting}
+                  type="button"
                 >
                   Edit
                 </button>
                 <button
                   onClick={() => requestCancel(b.id)}
-                  className="text-sm rounded border px-3 py-1 text-red-600 border-red-300 disabled:opacity-50"
+                  className="rounded border border-red-300 px-3 py-1 text-sm text-red-600 disabled:opacity-50"
                   disabled={deleting}
+                  type="button"
                 >
                   Cancel
                 </button>
               </div>
             </div>
             <div className="text-sm text-gray-600">
-              Guests: {b.guests}{' '}
-              {b.venue?.location?.city ? `· ${b.venue.location.city}` : ''}
+              Guests: {b.guests} {b.venue?.location?.city ? `· ${b.venue.location.city}` : ''}
             </div>
           </article>
         ))}
       </div>
 
       {/* Edit modal */}
-      <Modal open={!!editing} onClose={() => (saving ? null : setEditing(null))} title="Edit booking">
+      <Modal
+        open={!!editing}
+        onClose={saving ? () => {} : () => setEditing(null)}
+        title="Edit booking"
+      >
         {editing && (
-          <form onSubmit={saveEdit} className="grid gap-3 w-[min(90vw,420px)]">
+          <form onSubmit={saveEdit} className="grid w-[min(90vw,420px)] gap-3">
             <div className="grid gap-1">
-              <label className="text-sm font-medium">Start</label>
+              <label className="text-sm font-medium" htmlFor="pb-dateFrom">
+                Start
+              </label>
               <input
+                id="pb-dateFrom"
                 type="date"
                 name="dateFrom"
                 className="rounded border px-3 py-2"
@@ -148,8 +174,11 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
               />
             </div>
             <div className="grid gap-1">
-              <label className="text-sm font-medium">End</label>
+              <label className="text-sm font-medium" htmlFor="pb-dateTo">
+                End
+              </label>
               <input
+                id="pb-dateTo"
                 type="date"
                 name="dateTo"
                 className="rounded border px-3 py-2"
@@ -159,12 +188,15 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
               />
             </div>
             <div className="grid gap-1">
-              <label className="text-sm font-medium">Guests</label>
+              <label className="text-sm font-medium" htmlFor="pb-guests">
+                Guests
+              </label>
               <input
+                id="pb-guests"
                 type="number"
                 name="guests"
                 min={1}
-                className="rounded border px-3 py-2 w-28"
+                className="w-28 rounded border px-3 py-2"
                 defaultValue={editing.guests || 1}
                 required
               />
@@ -173,7 +205,7 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
             <div className="mt-2 flex items-center gap-2">
               <button
                 type="submit"
-                className="rounded bg-blue-600 text-white px-4 py-2 disabled:opacity-50"
+                className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
                 disabled={saving}
                 aria-busy={saving}
               >
@@ -195,13 +227,11 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
       {/* Cancel confirm modal */}
       <Modal
         open={!!confirmId}
-        onClose={() => (deleting ? null : setConfirmId(null))}
+        onClose={deleting ? () => {} : () => setConfirmId(null)}
         title="Cancel this booking?"
       >
-        <div className="grid gap-3 w-[min(90vw,420px)]">
-          <p className="text-sm text-gray-700">
-            Are you sure you want to cancel this booking?
-          </p>
+        <div className="grid w-[min(90vw,420px)] gap-3">
+          <p className="text-sm text-gray-700">Are you sure you want to cancel this booking?</p>
           <div className="flex justify-end gap-2">
             <button
               type="button"
@@ -213,7 +243,7 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
             </button>
             <button
               type="button"
-              className="rounded bg-red-600 text-white px-4 py-2 text-sm disabled:opacity-50"
+              className="rounded bg-red-600 px-4 py-2 text-sm text-white disabled:opacity-50"
               onClick={confirmCancel}
               disabled={deleting}
               aria-busy={deleting}
@@ -234,15 +264,20 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
 }
 
 /* utils */
+
+/** Format a date range like "Jan 2, 2025 → Jan 4, 2025". */
 function formatDateRange(from: string, to: string) {
   const f = new Date(from)
   const t = new Date(to)
   const opts: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
-  return `${f.toLocaleDateString(undefined, opts)} → ${t.toLocaleDateString(undefined, opts)}`
+  return `${f.toLocaleDateString(undefined, opts)} → ${t.toLocaleDateString(
+    undefined,
+    opts
+  )}`
 }
 
+/** Convert ISO string to yyyy-mm-dd for `<input type="date">` (local time). */
 function toInputDate(iso: string) {
-  // yyyy-mm-dd for <input type="date">
   const d = new Date(iso)
   const y = d.getFullYear()
   const m = String(d.getMonth() + 1).padStart(2, '0')
