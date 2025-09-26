@@ -8,6 +8,10 @@
     "typecheck": "tsc -b --pretty --noEmit",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "lint:unused": "ts-prune",
+    "lint:files": "unimported",
+    "lint:deps": "depcheck",
+    "lint:all": "npm run lint:unused && npm run lint:files && npm run lint:deps",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -1,0 +1,14 @@
+{
+  "entry": ["src/main.tsx"],
+  "tsConfigPath": "./tsconfig.app.json",
+  "aliases": {
+    "@": "src"
+  },
+  "ignoreUnresolved": [
+    "@/assets/*"
+  ],
+  "ignorePatterns": [
+    "**/*.css",
+    "src/vite-env.d.ts"
+  ]
+}

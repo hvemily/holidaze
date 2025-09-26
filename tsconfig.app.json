@@ -25,10 +25,6 @@
     "paths": {
       "@/*": ["src/*"]
     }
-
-    // Hvis du *ikke* bruker node-API'er i app-koden, la "types" stå tomt her.
-    // Bruker du noe fra `node:*` i app, legg til:
-    // "types": ["node"]
   },
   "include": ["src"]
 }

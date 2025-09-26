@@ -18,8 +18,8 @@ export default function App() {
     <ToastProvider>
       <Layout>
         <Routes>
-          {/* Home peker direkte til Venues */}
-          <Route path="/" element={<Venues />} />
+          {/* Forside: redirect til /venues */}
+          <Route path="/" element={<Navigate to="/venues" replace />} />
 
           <Route path="/venues" element={<Venues />} />
           <Route path="/venues/:id" element={<VenueDetail />} />
