@@ -1,4 +1,11 @@
 // src/pages/auth/Register.tsx
+/**
+ * Registration page.
+ * - creates account via `/auth/register`.
+ * - auto-logs in using `useAuth().login` on success.
+ * - shows toasts for success/error and disables submit while pending.
+ * - uI: a centered card with a background photo + dark overlay for contrast.
+ */
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '@/utils/api'
@@ -6,12 +13,6 @@ import { useToast } from '@/components/Toast'
 import { useAuth } from '@/stores/auth'
 import Spinner from '@/components/Spinner'
 
-/**
- * registration page.
- * - creates account via `/auth/register`.
- * - auto-logs in using `useAuth().login` on success.
- * - shows toasts for success/error and disables submit while pending.
- */
 export default function Register() {
   const navigate = useNavigate()
   const { success: toastSuccess, error: toastError } = useToast()
@@ -76,17 +77,36 @@ export default function Register() {
     }
   }
 
+  // large background image inside the card (Trolltunga)
+  const bg =
+    'https://res.cloudinary.com/simpleview/image/upload/v1450120681/clients/norway/hiking-trolltunga-hardangerfjord-norway-2-1_353a98f6-1f27-4a0d-953c-f2267f4e4b20.jpg'
+
   return (
     <main className="px-4">
-      <section className="mx-auto w-full max-w-md py-12 md:py-16">
-        <div className="overflow-hidden rounded-2xl border bg-white shadow-lg">
-          <div className="h-28 w-full bg-cover bg-center [background-image:url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop')]" />
-          <div className="p-6 sm:p-8">
-            <h1 className="text-center text-2xl font-extrabold tracking-tight">HOLIDAZE</h1>
-            <p className="mt-1 text-center text-sm text-gray-600">Create account</p>
+      <section className="mx-auto w-full max-w-lg py-10 md:py-14">
+        <div className="relative overflow-hidden rounded-2xl border shadow-lg">
+          {/* background image + overlay */}
+          <img
+            src={bg}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            decoding="async"
+          />
+          <div className="absolute inset-0 bg-black/45" />
+
+          {/* foreground content */}
+          <div className="relative z-10 p-6 sm:p-8 text-white">
+            <h1 className="text-center text-3xl font-extrabold tracking-tight">
+              HOLIDAZE
+            </h1>
+            <p className="mt-1 text-center text-sm text-white/90">Create account</p>
 
             {err && (
-              <p className="mt-4 text-sm text-red-600" role="alert" aria-live="polite">
+              <p
+                className="mt-4 rounded-lg bg-red-600/90 px-3 py-2 text-sm"
+                role="alert"
+                aria-live="polite"
+              >
                 {err}
               </p>
             )}
@@ -100,14 +120,14 @@ export default function Register() {
                   placeholder="Name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="rounded-lg border px-3 py-2"
+                  className="rounded-lg border bg-white px-3 py-2 text-gray-900"
                   aria-invalid={Boolean(err)}
                   autoComplete="name"
                   required
                 />
               </label>
 
-              {/* email */}
+              {/* Email */}
               <label className="grid gap-1">
                 <span className="sr-only">Email</span>
                 <input
@@ -115,7 +135,7 @@ export default function Register() {
                   placeholder="stud.noroff.no email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="rounded-lg border px-3 py-2"
+                  className="rounded-lg border bg-white px-3 py-2 text-gray-900"
                   aria-invalid={Boolean(err)}
                   inputMode="email"
                   autoComplete="username"
@@ -124,7 +144,7 @@ export default function Register() {
                 />
               </label>
 
-              {/* password */}
+              {/* Password */}
               <label className="grid gap-1">
                 <span className="sr-only">Password</span>
                 <input
@@ -132,7 +152,7 @@ export default function Register() {
                   placeholder="Password (min 8 chars)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-lg border px-3 py-2"
+                  className="rounded-lg border bg-white px-3 py-2 text-gray-900"
                   aria-invalid={Boolean(err)}
                   autoComplete="new-password"
                   minLength={8}
@@ -140,18 +160,18 @@ export default function Register() {
                 />
               </label>
 
-              {/* venue manager */}
+              {/* Venue manager */}
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
                   checked={venueManager}
                   onChange={(e) => setVenueManager(e.target.checked)}
-                  className="h-4 w-4 rounded border"
+                  className="h-4 w-4 rounded border bg-white"
                 />
                 I am a Venue Manager
               </label>
 
-              {/* submit */}
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={submitting}
@@ -168,9 +188,12 @@ export default function Register() {
               </button>
             </form>
 
-            <p className="mt-4 text-center text-sm text-gray-600">
+            <p className="mt-4 text-center text-sm text-white/90">
               Have an account?{' '}
-              <Link to="/login" className="underline underline-offset-2">
+              <Link
+                to="/login"
+                className="underline underline-offset-2 hover:text-white"
+              >
                 Login
               </Link>
             </p>

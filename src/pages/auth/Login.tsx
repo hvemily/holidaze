@@ -1,9 +1,10 @@
 // src/pages/auth/Login.tsx
 /**
- * login page.
+ * Login page.
  * - uses `useAuth().login` to authenticate.
  * - shows toasts on success/error.
  * - disables the submit button while submitting.
+ * - uI: a centered card with a background photo + dark overlay for contrast.
  */
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -34,8 +35,9 @@ export default function Login() {
     const passwordClean = password.trim()
 
     if (!emailClean || !passwordClean) {
-      setErr('Please enter your email and password.')
-      toastError('Please enter your email and password.')
+      const msg = 'Please enter your email and password.'
+      setErr(msg)
+      toastError(msg)
       return
     }
 
@@ -55,21 +57,42 @@ export default function Login() {
     }
   }
 
+  // large background image inside the card
+  const bg =
+    "https://res.cloudinary.com/simpleview/image/upload/v1450120681/clients/norway/hiking-trolltunga-hardangerfjord-norway-2-1_353a98f6-1f27-4a0d-953c-f2267f4e4b20.jpg"
+
   return (
     <main className="px-4">
-      <section className="mx-auto w-full max-w-md py-12 md:py-16">
-        <div className="overflow-hidden rounded-2xl border bg-white shadow-lg">
-          <div className="h-28 w-full bg-cover bg-center [background-image:url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?q=80&w=1200&auto=format&fit=crop')]" />
-          <div className="p-6 sm:p-8">
-            <h1 className="text-center text-2xl font-extrabold tracking-tight">HOLIDAZE</h1>
-            <p className="mt-1 text-center text-sm text-gray-600">Login</p>
+      {/* center the card; keep some vertical breathing room */}
+      <section className="mx-auto w-full max-w-lg py-10 md:py-14">
+        <div className="relative overflow-hidden rounded-2xl border shadow-lg">
+          {/* background image + soft dark overlay to improve text contrast */}
+          <img
+            src={bg}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            decoding="async"
+          />
+          <div className="absolute inset-0 bg-black/45" />
+
+          {/* foreground content */}
+          <div className="relative z-10 p-6 sm:p-8 text-white">
+            <h1 className="text-center text-3xl font-extrabold tracking-tight">
+              HOLIDAZE
+            </h1>
+            <p className="mt-1 text-center text-sm text-white/90">Login</p>
 
             {err && (
-              <p className="mt-4 text-sm text-red-600" role="alert" aria-live="polite">
+              <p
+                className="mt-4 rounded-lg bg-red-600/90 px-3 py-2 text-sm"
+                role="alert"
+                aria-live="polite"
+              >
                 {err}
               </p>
             )}
 
+            {/* form lives on top of the image; inputs are white to ensure legibility */}
             <form onSubmit={onSubmit} className="mt-6 grid gap-4" noValidate>
               <label className="grid gap-1">
                 <span className="sr-only">Email</span>
@@ -80,7 +103,7 @@ export default function Login() {
                   inputMode="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="rounded-lg border px-3 py-2"
+                  className="rounded-lg border bg-white px-3 py-2 text-gray-900"
                   aria-invalid={Boolean(err)}
                   required
                   autoFocus
@@ -96,7 +119,7 @@ export default function Login() {
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-lg border px-3 py-2"
+                  className="rounded-lg border bg-white px-3 py-2 text-gray-900"
                   aria-invalid={Boolean(err)}
                   required
                 />
@@ -118,9 +141,12 @@ export default function Login() {
               </button>
             </form>
 
-            <p className="mt-4 text-center text-sm text-gray-600">
+            <p className="mt-4 text-center text-sm text-white/90">
               No account?{' '}
-              <Link to="/register" className="underline underline-offset-2">
+              <Link
+                to="/register"
+                className="underline underline-offset-2 hover:text-white"
+              >
                 Register
               </Link>
             </p>

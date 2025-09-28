@@ -158,13 +158,17 @@ useEffect(() => {
                     </NavLink>
                     <NavLink
                       to="/register?role=guest"
-                      className="hidden md:inline text-nav underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                      className="hidden md:inline text-nav underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 font-bold"
                     >
                       Register as guest
                     </NavLink>
                     <NavLink
                       to="/login"
-                      className="btn hidden md:inline focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                      className="
+                        btn hidden md:inline 
+                        focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70
+                        hover:bg-[#1B5071] hover:text-white transition-colors duration-200
+                      "
                     >
                       Login
                     </NavLink>
@@ -218,7 +222,7 @@ useEffect(() => {
                   <NavLink to="/login" className="btn-solid block w-full py-2 text-center" role="menuitem">
                     Login
                   </NavLink>
-                  <NavLink to="/register?role=guest" className="btn block w-full py-2 text-center" role="menuitem">
+                  <NavLink to="/register?role=guest" className="btn block w-full py-2 text-center font-bold" role="menuitem">
                     Register as guest
                   </NavLink>
                   <NavLink to="/register?role=manager" className="btn block w-full py-2 text-center" role="menuitem">

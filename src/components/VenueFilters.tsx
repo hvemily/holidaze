@@ -103,7 +103,7 @@ export default function VenueFilters({
         {/* who */}
         <div className="px-4 py-2.5">
           <label htmlFor={whoId} className="block text-[11px] uppercase tracking-wide text-gray-500">
-            Who
+            Guests
           </label>
           <input
             id={whoId}
