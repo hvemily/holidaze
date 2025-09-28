@@ -6,9 +6,9 @@ import RatingStars from '@/components/RatingStars'
 type Props = { venue: Venue }
 
 /**
- * Compact card for a venue.
- * - Clickable wrapper navigates to venue detail.
- * - Shows cover image, name, rating, location and price.
+ * compact card for a venue.
+ * - clickable wrapper navigates to venue detail.
+ * - shows cover image, name, rating, location and price.
  */
 export default function VenueCard({ venue: v }: Props) {
   const img = v.media?.[0]?.url ?? 'https://picsum.photos/seed/holidaze/640/480'
@@ -28,7 +28,7 @@ export default function VenueCard({ venue: v }: Props) {
       "
       title={`${v.name} — ${city}, ${country}`}
     >
-      {/* Cover image */}
+      {/* cover image */}
       <img
         src={img}
         alt={alt}

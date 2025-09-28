@@ -1,18 +1,18 @@
 // src/components/Spinner.tsx
 type SpinnerProps = {
-  /** Size of the dots (default: md). */
+  /** size of the dots (default: md). */
   size?: 'sm' | 'md' | 'lg'
-  /** Inline mode = small, horizontally aligned with text. */
+  /** inline mode = small, horizontally aligned with text. */
   inline?: boolean
-  /** Optional extra classes for wrapper. */
+  /** optional extra classes for wrapper. */
   className?: string
 }
 
 /**
- * Animated bouncing-dot spinner.
+ * animated bouncing-dot spinner.
  *
- * - Uses three colored dots with staggered bounce delays.
- * - Default renders centered in a block with padding.
+ * - uses three colored dots with staggered bounce delays.
+ * - default renders centered in a block with padding.
  * - `inline` mode makes it compact and align with surrounding text.
  */
 export default function Spinner({
@@ -32,17 +32,17 @@ export default function Spinner({
         : 'flex items-center justify-center space-x-2 py-10'
       } ${className}`}
     >
-      {/* Red dot */}
+      {/* red dot */}
       <div
         className={`${sizeCls} animate-bounce rounded-full bg-red-600`}
         style={{ animationDelay: '0ms' }}
       />
-      {/* White dot */}
+      {/* white dot */}
       <div
         className={`${sizeCls} animate-bounce rounded-full border border-gray-300 bg-white`}
         style={{ animationDelay: '150ms' }}
       />
-      {/* Blue dot */}
+      {/* blue dot */}
       <div
         className={`${sizeCls} animate-bounce rounded-full bg-blue-600`}
         style={{ animationDelay: '300ms' }}

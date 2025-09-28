@@ -6,11 +6,6 @@
  * - Uses srcSet + sizes for responsive loading.
  * - Includes gradient overlay for text readability.
  * - Provides a call-to-action link to scroll down to the venues list.
- *
- * Full-bleed note:
- * - The page (Venues.tsx) wraps this component in a negative-margin container
- *   to cancel layout paddings. This keeps the hero container-agnostic and avoids
- *   sub-pixel "white sliver" issues on mobile.
  */
 export default function Hero() {
   // Base Unsplash image URL (without width/quality params).
@@ -20,21 +15,21 @@ export default function Hero() {
   return (
     <section
       className="
+        full-bleed           /* 👈 makes this section go edge-to-edge */
         relative
         h-[56vh] md:h-[68vh]
-        w-full           /* fill the wrapper; wrapper handles full-bleed */
-        overflow-clip    /* clip any sub-pixel overflow */
       "
     >
       {/* Responsive background image */}
       <img
-        src={`${base}&w=1600&q=70`}
+        src={`${base}&w=1920&q=70`}
         srcSet={`
-          ${base}&w=768&q=60 768w,
+          ${base}&w=768&q=60   768w,
           ${base}&w=1280&q=65 1280w,
-          ${base}&w=1600&q=70 1600w
+          ${base}&w=1920&q=70 1920w,
+          ${base}&w=2560&q=70 2560w
         `}
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1600px"
+        sizes="100vw"
         alt="Norwegian fjord landscape with waterfalls and mountains"
         className="absolute inset-0 h-full w-full object-cover"
         fetchPriority="high"

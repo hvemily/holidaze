@@ -20,11 +20,11 @@ type VenueWithBookings = Venue & { bookings?: BookingEx[] }
 
 /**
  * Profile page
- * - Loads profile, venues and bookings via `useProfileData(name)`.
- * - If viewing own profile (`isSelf`): can edit avatar, create/edit/delete venues.
- * - Shows upcoming bookings:
- *   - For venue managers viewing their own profile: aggregates across owned venues.
- *   - Otherwise: shows the user's own bookings (`ProfileBookings`).
+ * - loads profile, venues and bookings via `useProfileData(name)`.
+ * - if viewing own profile (`isSelf`): can edit avatar, create/edit/delete venues.
+ * - shows upcoming bookings:
+ *   - for venue managers viewing their own profile: aggregates across owned venues.
+ *   - otherwise: shows the user's own bookings (`ProfileBookings`).
  */
 export default function Profile() {
   const { name } = useParams<RouteParams>()
@@ -35,13 +35,13 @@ export default function Profile() {
   const isSelf =
     !!(user?.name && name) && user.name.toLowerCase() === name.toLowerCase()
 
-  // Modals
+  // modals
   const [openCreate, setOpenCreate] = useState(false)
   const [editing, setEditing] = useState<Venue | null>(null)
   const [saving, setSaving] = useState(false)
   const [openEditProfile, setOpenEditProfile] = useState(false)
 
-  // Delete flow
+  // delete flow
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -54,7 +54,7 @@ export default function Profile() {
 }, [profile?.name])
 
 
-  // When the profile is a venue manager: fetch venues with `_bookings=true` for upcoming list
+  // when the profile is a venue manager: fetch venues with `_bookings=true` for upcoming list
   useEffect(() => {
     if (!loading && profile?.venueManager && name) {
       ;(async () => {
@@ -158,7 +158,7 @@ export default function Profile() {
     }
   }
 
-  // --- Upcoming bookings across my venues (for venue managers) ---
+  // --- upcoming bookings across my venues (for venue managers) ---
   const today0 = new Date(); today0.setHours(0, 0, 0, 0)
   const fmt: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
 
@@ -177,10 +177,10 @@ export default function Profile() {
 
   return (
     <section className="grid gap-6 py-6 sm:py-8">
-      {/* Header with banner + avatar */}
+      {/* header with banner + avatar */}
       <ProfileHeader profile={profile} />
 
-      {/* Actions under header – grid on mobile, inline on ≥sm */}
+      {/* actions under header – grid on mobile, inline on ≥sm */}
       <div className="flex justify-center">
         <div className="mt-2 grid grid-cols-2 gap-2 sm:inline-flex sm:gap-3">
           {isSelf && (
@@ -204,7 +204,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Two cards: My venues + Bookings */}
+      {/* two cards: My venues + Bookings */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* My venues */}
         <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
@@ -226,7 +226,7 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Bookings */}
+        {/* bookings */}
         <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
           <div className="border-b px-4 py-3 sm:px-5 sm:py-4">
             <h2 className="text-base font-semibold sm:text-lg">Upcoming bookings</h2>
@@ -265,7 +265,7 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Create venue modal */}
+      {/* create venue modal */}
       <Modal
         open={openCreate}
         onClose={saving ? () => {} : () => setOpenCreate(false)}
@@ -274,7 +274,7 @@ export default function Profile() {
         <VenueForm submitting={saving} onSubmit={handleCreate} />
       </Modal>
 
-      {/* Edit venue modal */}
+      {/* edit venue modal */}
       <Modal
         open={!!editing}
         onClose={saving ? () => {} : () => setEditing(null)}
@@ -283,7 +283,7 @@ export default function Profile() {
         {editing && <VenueForm initial={editing} submitting={saving} onSubmit={handleEdit} />}
       </Modal>
 
-      {/* Delete confirm modal */}
+      {/* delete confirm modal */}
       <Modal
         open={!!confirmDeleteId}
         onClose={deleting ? () => {} : () => setConfirmDeleteId(null)}
@@ -315,7 +315,7 @@ export default function Profile() {
         </div>
       </Modal>
 
-      {/* Edit profile (avatar) modal */}
+      {/* edit profile (avatar) modal */}
       <EditAvatarModal
         open={openEditProfile}
         onClose={() => setOpenEditProfile(false)}

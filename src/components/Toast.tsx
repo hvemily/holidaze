@@ -6,9 +6,9 @@ type ToastKind = 'success' | 'error'
 type ToastItem = { id: number; kind: ToastKind; message: string; timeout?: number }
 
 type ToastCtx = {
-  /** Show a green success toast. */
+  /** show a green success toast. */
   success: (msg: string, timeout?: number) => void
-  /** Show a red error toast. */
+  /** show a red error toast. */
   error: (msg: string, timeout?: number) => void
 }
 
@@ -17,11 +17,11 @@ const Ctx = createContext<ToastCtx | null>(null)
 /**
  * ToastProvider renders a portal-based toast stack and exposes helpers via context.
  *
- * Features:
- * - Success/Error variants with optional timeout (default: 3500ms)
- * - Mobile overlay (taps outside are ignored; visual backdrop only)
- * - Desktop stacks toasts bottom-right
- * - Screen-reader friendly: error uses `role="alert"`, success uses `role="status"`
+ * features:
+ * - success/Error variants with optional timeout (default: 3500ms)
+ * - mobile overlay (taps outside are ignored; visual backdrop only)
+ * - desktop stacks toasts bottom-right
+ * - screen-reader friendly: error uses `role="alert"`, success uses `role="status"`
  */
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([])
@@ -74,11 +74,11 @@ function ToastContainer({
   items: ToastItem[]
   onClose: (id: number) => void
 }) {
-  // Mobile: centered with subtle backdrop
-  // Desktop: bottom-right stack
+  // mobile: centered with subtle backdrop
+  // desktop: bottom-right stack
   return (
     <>
-      {/* Backdrop (mobile only) */}
+      {/* backdrop (mobile only) */}
       <div
         className={`fixed inset-0 z-[60] bg-black/20 transition md:hidden
           ${items.length ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'}
@@ -122,7 +122,7 @@ function ToastCard({ item, onClose }: { item: ToastItem; onClose: () => void }) 
     </svg>
   )
 
-  // Role hints screen readers to announce appropriately:
+  // role hints screen readers to announce appropriately:
   // - error → alert (assertive)
   // - success → status (polite)
   const role = isSuccess ? 'status' : 'alert'

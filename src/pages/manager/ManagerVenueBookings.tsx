@@ -8,9 +8,9 @@ import { useToast } from '@/components/Toast'
 
 /**
  * ManagerVenueBookings
- * - Fetches a venue by :id and its upcoming bookings.
- * - Displays a simple list of upcoming bookings for that venue.
- * - Shows toasts on error and handles missing :id gracefully.
+ * - fetches a venue by :id and its upcoming bookings.
+ * - displays a simple list of upcoming bookings for that venue.
+ * - shows toasts on error and handles missing :id gracefully.
  */
 export default function ManagerVenueBookings() {
   const { id } = useParams<{ id: string }>()
@@ -35,12 +35,12 @@ export default function ManagerVenueBookings() {
           return
         }
 
-        // Load venue info
+        // load venue info
         const v = await api.get<{ data: Venue }>(
           `/holidaze/venues/${encodeURIComponent(id)}`
         )
 
-        // Load upcoming bookings (owner/customer data if available)
+        // load upcoming bookings (owner/customer data if available)
         const b = await api.get<{ data: Booking[] }>(
           `/holidaze/venues/${encodeURIComponent(id)}/bookings?upcoming=true&_owner=true&_customer=true`
         )
@@ -98,7 +98,7 @@ export default function ManagerVenueBookings() {
         <div className="grid gap-3">
           {bookings.map((b) => {
             const who =
-              // Prefer customer name if present; fall back to venue owner; then booking id
+              // prefer customer name if present; fall back to venue owner; then booking id
               // @ts-expect-error: some API variants include `customer`
               (b.customer?.name as string | undefined) ??
               b.venue?.owner?.name ??
@@ -119,7 +119,7 @@ export default function ManagerVenueBookings() {
   )
 }
 
-/** Format a date range like "Jan 2, 2025 → Jan 5, 2025". */
+/** format a date range like "jan 2, 2025 → jan 5, 2025". */
 function formatDateRange(from: string, to: string) {
   const f = new Date(from)
   const t = new Date(to)

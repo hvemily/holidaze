@@ -5,14 +5,14 @@ import { createPortal } from 'react-dom'
 import clsx from 'clsx'
 
 /**
- * Accessible modal dialog component.
+ * accessible modal dialog component.
  *
- * Features:
- * - Locks body scroll while open.
- * - Closes on `Escape` key or overlay click.
- * - Uses React portal to render into <body>.
- * - Supports optional title (linked via aria-labelledby).
- * - Panel has its own scroll with max-height.
+ * features:
+ * - bocks body scroll while open.
+ * - closes on `Escape` key or overlay click.
+ * - uses React portal to render into <body>.
+ * - supports optional title (linked via aria-labelledby).
+ * - panel has its own scroll with max-height.
  */
 export default function Modal({
   open,
@@ -32,11 +32,11 @@ export default function Modal({
   useEffect(() => {
     if (!open) return
 
-    // Save current body overflow setting
+    // save current body overflow setting
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
-    // Close on ESC key
+    // close on ESC key
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
@@ -57,14 +57,14 @@ export default function Modal({
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
     >
-      {/* Overlay */}
+      {/* overlay */}
       <div
         className="absolute inset-0 bg-black/40"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Panel wrapper – prevents overlay click bubbling */}
+      {/* panel wrapper – prevents overlay click bubbling */}
       <div
         className="relative z-10 mx-4 w-full max-w-2xl"
         onClick={(e) => e.stopPropagation()}
@@ -77,7 +77,7 @@ export default function Modal({
             className
           )}
         >
-          {/* Header */}
+          {/* header */}
           <div className="mb-3 flex items-center justify-between">
             {title && (
               <h3 id={titleId} className="text-lg font-semibold">
@@ -94,7 +94,7 @@ export default function Modal({
             </button>
           </div>
 
-          {/* Content */}
+          {/* content */}
           {children}
         </div>
       </div>

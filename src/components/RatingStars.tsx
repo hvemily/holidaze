@@ -3,24 +3,24 @@ import { useId } from 'react'
 import clsx from 'clsx'
 
 type Props = {
-  /** Rating value, supports decimals. Defaults to 0. */
+  /** rating value, supports decimals. Defaults to 0. */
   value?: number
-  /** Maximum possible rating (default 5). */
+  /** maximum possible rating (default 5). */
   outOf?: number
-  /** Whether to show numeric rating beside the stars. */
+  /** whether to show numeric rating beside the stars. */
   showNumber?: boolean
-  /** Size of the star icons. */
+  /** size of the star icons. */
   size?: 'sm' | 'md' | 'lg'
-  /** Optional extra CSS classes for the wrapper. */
+  /** pptional extra CSS classes for the wrapper. */
   className?: string
 }
 
 /**
- * Renders a row of star icons with partial fills to represent ratings.
+ * renders a row of star icons with partial fills to represent ratings.
  *
- * - Uses `<linearGradient>` with unique IDs for partial fill.
- * - Accepts decimal ratings, rounded to 1 decimal.
- * - Accessible: adds `aria-label` with the score.
+ * - uses `<linearGradient>` with unique IDs for partial fill.
+ * - accepts decimal ratings, rounded to 1 decimal.
+ * - accessible: adds `aria-label` with the score.
  */
 export default function RatingStars({
   value = 0,
@@ -29,19 +29,19 @@ export default function RatingStars({
   size = 'sm',
   className,
 }: Props) {
-  // Clamp value between 0 and outOf, round to 1 decimal for stable rendering
+  // clamp value between 0 and outOf, round to 1 decimal for stable rendering
   const clamped = Math.max(0, Math.min(outOf, Number(value) || 0))
   const rounded = Math.round(clamped * 10) / 10
 
-  // Tailwind size class per prop
+  // tailwind size class per prop
   const sizeCls =
     size === 'lg' ? 'h-6 w-6' : size === 'md' ? 'h-5 w-5' : 'h-4 w-4'
 
   const uid = useId()
 
   /**
-   * Compute fill percentage for star index `i`.
-   * Example: if value=3.4 → star[0..2] = 100%, star[3] = 40%, star[4] = 0%.
+   * compute fill percentage for star index `i`.
+   * example: if value=3.4 → star[0..2] = 100%, star[3] = 40%, star[4] = 0%.
    */
   const fillPct = (i: number) => {
     const s = rounded - i // how much of this star is filled
@@ -49,7 +49,7 @@ export default function RatingStars({
     return Math.round(p * 1000) / 10 // percentage with 1 decimal
   }
 
-  /** Star component with gradient fill. */
+  /** star component with gradient fill. */
   const Star = ({ pct }: { pct: number }) => {
     const gradId = `${uid}-grad-${pct}`
     return (
@@ -66,12 +66,12 @@ export default function RatingStars({
             <stop offset="100%" stopColor="transparent" />
           </linearGradient>
         </defs>
-        {/* Base (gray) */}
+        {/* base (gray) */}
         <path
           fill="#d1d5db"
           d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.2 3.698a1 1 0 00.95.69h3.887c.967 0 1.371 1.24.588 1.81l-3.146 2.286a1 1 0 00-.364 1.118l1.2 3.698c.3.921-.755 1.688-1.54 1.118L10 14.347l-3.726 2.698c-.784.57-1.838-.197-1.539-1.118l1.2-3.698a1 1 0 00-.364-1.118L2.425 9.125c-.783-.57-.38-1.81.588-1.81h3.887a1 1 0 00.95-.69l1.2-3.698z"
         />
-        {/* Filled portion (yellow) */}
+        {/* filled portion (yellow) */}
         <path
           fill={`url(#${gradId})`}
           d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.2 3.698a1 1 0 00.95.69h3.887c.967 0 1.371 1.24.588 1.81l-3.146 2.286a1 1 0 00-.364 1.118l1.2 3.698c.3.921-.755 1.688-1.54 1.118L10 14.347l-3.726 2.698c-.784.57-1.838-.197-1.539-1.118l1.2-3.698a1 1 0 00-.364-1.118L2.425 9.125c-.783-.57-.38-1.81.588-1.81h3.887a1 1 0 00.95-.69l1.2-3.698z"

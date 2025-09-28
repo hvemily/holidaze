@@ -1,9 +1,9 @@
 // src/pages/auth/Login.tsx
 /**
- * Login page.
- * - Uses `useAuth().login` to authenticate.
- * - Shows toasts on success/error.
- * - Disables the submit button while submitting.
+ * login page.
+ * - uses `useAuth().login` to authenticate.
+ * - shows toasts on success/error.
+ * - disables the submit button while submitting.
  */
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -21,7 +21,7 @@ export default function Login() {
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
-  // Set the browser tab title
+  // set the browser tab title
   useEffect(() => {
     document.title = 'Holidaze | Login'
   }, [])

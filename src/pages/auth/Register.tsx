@@ -7,10 +7,10 @@ import { useAuth } from '@/stores/auth'
 import Spinner from '@/components/Spinner'
 
 /**
- * Registration page.
- * - Creates account via `/auth/register`.
- * - Auto-logs in using `useAuth().login` on success.
- * - Shows toasts for success/error and disables submit while pending.
+ * registration page.
+ * - creates account via `/auth/register`.
+ * - auto-logs in using `useAuth().login` on success.
+ * - shows toasts for success/error and disables submit while pending.
  */
 export default function Register() {
   const navigate = useNavigate()
@@ -24,7 +24,7 @@ export default function Register() {
   const [submitting, setSubmitting] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
-  // Set document title
+  // set document title
   useEffect(() => {
     document.title = 'Holidaze | Register'
   }, [])
@@ -54,7 +54,7 @@ export default function Register() {
       setSubmitting(true)
       setErr(null)
 
-      // Create user
+      // create user
       await api.post('/auth/register', {
         name: nameClean,
         email: emailClean,
@@ -62,7 +62,7 @@ export default function Register() {
         venueManager,
       })
 
-      // Auto-login via store (updates token+user globally)
+      // auto-login via store (updates token+user globally)
       await login({ email: emailClean, password: passwordClean })
 
       toastSuccess('Account created!')
@@ -107,7 +107,7 @@ export default function Register() {
                 />
               </label>
 
-              {/* Email */}
+              {/* email */}
               <label className="grid gap-1">
                 <span className="sr-only">Email</span>
                 <input
@@ -124,7 +124,7 @@ export default function Register() {
                 />
               </label>
 
-              {/* Password */}
+              {/* password */}
               <label className="grid gap-1">
                 <span className="sr-only">Password</span>
                 <input
@@ -140,7 +140,7 @@ export default function Register() {
                 />
               </label>
 
-              {/* Venue manager */}
+              {/* venue manager */}
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="checkbox"
@@ -151,7 +151,7 @@ export default function Register() {
                 I am a Venue Manager
               </label>
 
-              {/* Submit */}
+              {/* submit */}
               <button
                 type="submit"
                 disabled={submitting}

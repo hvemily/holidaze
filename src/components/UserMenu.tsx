@@ -10,10 +10,10 @@ type Props = {
 }
 
 /**
- * User avatar dropdown menu.
- * - Toggles on click.
- * - Closes on route change, outside click, and Escape key.
- * - Focus management: moves focus into the menu on open and back to the button on close.
+ * user avatar dropdown menu.
+ * - toggles on click.
+ * - closes on route change, outside click, and Escape key.
+ * - focus management: moves focus into the menu on open and back to the button on close.
  */
 export default function UserMenu({ user, onLogoutClick }: Props) {
   const [open, setOpen] = useState(false)
@@ -24,12 +24,12 @@ export default function UserMenu({ user, onLogoutClick }: Props) {
   const menuRef = useRef<HTMLDivElement | null>(null)
   const firstItemRef = useRef<HTMLAnchorElement | HTMLButtonElement | null>(null)
 
-  // Close on route navigation
+  // close on route navigation
   useEffect(() => {
     setOpen(false)
   }, [loc.pathname, loc.search])
 
-  // Close on outside click
+  // close on outside click
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
       if (!open) return
@@ -44,7 +44,7 @@ export default function UserMenu({ user, onLogoutClick }: Props) {
     return () => document.removeEventListener('mousedown', onDocMouseDown)
   }, [open])
 
-  // Close on ESC
+  // close on ESC
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (!open) return
@@ -53,7 +53,7 @@ export default function UserMenu({ user, onLogoutClick }: Props) {
         setOpen(false)
         buttonRef.current?.focus()
       }
-      // Optional nicety: ArrowDown from the button opens and focuses first item
+      // optional nicety: ArrowDown from the button opens and focuses first item
       if (e.key === 'ArrowDown' && document.activeElement === buttonRef.current) {
         e.preventDefault()
         setOpen(true)
@@ -63,7 +63,7 @@ export default function UserMenu({ user, onLogoutClick }: Props) {
     return () => document.removeEventListener('keydown', onKey)
   }, [open])
 
-  // Move focus into the menu when it opens
+  // move focus into the menu when it opens
   useEffect(() => {
     if (open) {
       // delay to next tick so DOM is present
@@ -80,7 +80,7 @@ export default function UserMenu({ user, onLogoutClick }: Props) {
 
   return (
     <div className="relative" ref={wrapperRef}>
-      {/* Trigger pill */}
+      {/* trigger pill */}
       <button
         ref={buttonRef}
         type="button"
@@ -105,7 +105,7 @@ export default function UserMenu({ user, onLogoutClick }: Props) {
         />
       </button>
 
-      {/* Dropdown */}
+      {/* dropdown */}
       {open && (
         <div
           id="user-menu-popover"
@@ -134,7 +134,7 @@ export default function UserMenu({ user, onLogoutClick }: Props) {
               onClick={() => setOpen(false)}
             />
 
-            {/* Logout */}
+            {/* logout */}
             <button
               type="button"
               role="menuitem"
@@ -153,7 +153,7 @@ export default function UserMenu({ user, onLogoutClick }: Props) {
   )
 }
 
-/** Button with same look as 'btn' / 'btn-solid' in the hamburger menu */
+/** button with same look as 'btn' / 'btn-solid' in the hamburger menu */
 const MenuButton = ({
   to,
   label,

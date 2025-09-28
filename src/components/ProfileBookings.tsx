@@ -4,22 +4,22 @@ import { Link } from 'react-router-dom'
 import type { Booking } from '@/utils/types'
 import { api } from '@/utils/api'
 import Modal from '@/components/Modal'
-import { useToast } from '@/components/Toast' // fixed path
+import { useToast } from '@/components/Toast' 
 import Spinner from '@/components/Spinner'
 
 /**
- * List of the user's bookings with edit & cancel flows.
+ * list of the user's bookings with edit & cancel flows.
  *
- * - Edit opens a modal with basic validation (dates + guests).
- * - Cancel uses an optimistic update with rollback on failure.
- * - Uses toasts to provide feedback.
+ * - edit opens a modal with basic validation (dates + guests).
+ * - cancel uses an optimistic update with rollback on failure.
+ * - uses toasts to provide feedback.
  */
 export default function ProfileBookings({ bookings: initial }: { bookings: Booking[] }) {
   const [bookings, setBookings] = useState<Booking[]>(initial)
   const [editing, setEditing] = useState<Booking | null>(null)
   const [saving, setSaving] = useState(false)
 
-  // Cancel flow
+  // cancel flow
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -151,7 +151,7 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
         ))}
       </div>
 
-      {/* Edit modal */}
+      {/* edit modal */}
       <Modal
         open={!!editing}
         onClose={saving ? () => {} : () => setEditing(null)}
@@ -224,7 +224,7 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
         )}
       </Modal>
 
-      {/* Cancel confirm modal */}
+      {/* cancel confirm modal */}
       <Modal
         open={!!confirmId}
         onClose={deleting ? () => {} : () => setConfirmId(null)}
@@ -265,7 +265,7 @@ export default function ProfileBookings({ bookings: initial }: { bookings: Booki
 
 /* utils */
 
-/** Format a date range like "Jan 2, 2025 → Jan 4, 2025". */
+/** format a date range like "jan 2, 2025 → jan 4, 2025". */
 function formatDateRange(from: string, to: string) {
   const f = new Date(from)
   const t = new Date(to)
@@ -276,7 +276,7 @@ function formatDateRange(from: string, to: string) {
   )}`
 }
 
-/** Convert ISO string to yyyy-mm-dd for `<input type="date">` (local time). */
+/** convert ISO string to yyyy-mm-dd for `<input type="date">` (local time). */
 function toInputDate(iso: string) {
   const d = new Date(iso)
   const y = d.getFullYear()

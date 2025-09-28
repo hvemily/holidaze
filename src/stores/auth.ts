@@ -11,7 +11,7 @@ const STORAGE_API_KEY  = 'auth:apiKey'
 type LoginPayload = { email: string; password: string }
 
 /**
- * Shape of the authentication store.
+ * shape of the authentication store.
  * - `user` reflects the currently signed-in profile (or `null`).
  * - `login` performs a network login, persists user + tokens, and updates the API client.
  * - `logout` clears all persisted credentials and resets the API client.
@@ -22,13 +22,13 @@ type AuthState = {
   user: Profile | null
   login: (payload: LoginPayload) => Promise<void>
   logout: () => void
-  /** Merge-patch the in-memory (and persisted) user; triggers rerenders. */
+  /** merge-patch the in-memory (and persisted) user; triggers rerenders. */
   patchUser: (patch: Partial<Profile>) => void
 }
 
 /**
- * Safely parse JSON; returns `null` on failure instead of throwing.
- * Useful when reading from LocalStorage where data may be missing or stale.
+ * safely parse JSON; returns `null` on failure instead of throwing.
+ * useful when reading from LocalStorage where data may be missing or stale.
  */
 function safeParse<T>(raw: string | null): T | null {
   if (!raw) return null
@@ -39,12 +39,12 @@ function safeParse<T>(raw: string | null): T | null {
   }
 }
 
-/** Load the persisted user from LocalStorage, if present. */
+/** load the persisted user from LocalStorage, if present. */
 function loadUser(): Profile | null {
   return safeParse<Profile>(localStorage.getItem(STORAGE_USER_KEY))
 }
 
-/** Load the persisted API key from LocalStorage, if present. */
+/** load the persisted API key from LocalStorage, if present. */
 function loadApiKey(): string {
   try {
     return localStorage.getItem(STORAGE_API_KEY) || ''
@@ -58,9 +58,9 @@ type ApiKeyObject = { key?: string; apiKey?: string }
 type ApiKeyResponse = { data: ApiKeyObject | string }
 
 /**
- * Ensure an API key exists for the current user.
- * - If a key is already persisted, reuse it.
- * - Otherwise create a new key via `/auth/create-api-key`, persist it, and return it.
+ * ensure an API key exists for the current user.
+ * - if a key is already persisted, reuse it.
+ * - otherwise create a new key via `/auth/create-api-key`, persist it, and return it.
  * @throws Error when the API key could not be created.
  */
 async function ensureApiKey(): Promise<string> {
@@ -81,46 +81,46 @@ async function ensureApiKey(): Promise<string> {
 }
 
 /**
- * Authentication store:
- * - Persists `user` and API key in LocalStorage so sessions survive page reloads.
- * - Configures the shared API client (`api`) with the current access token and API key.
+ * authentication store:
+ * - persists `user` and API key in LocalStorage so sessions survive page reloads.
+ * - configures the shared API client (`api`) with the current access token and API key.
  */
 export const useAuth = create<AuthState>((set, get) => ({
-  /** Initial user state is loaded from LocalStorage on store creation. */
+  /** initial user state is loaded from LocalStorage on store creation. */
   user: loadUser(),
 
   /**
-   * Perform login against the backend.
-   * - On success: persist the user, set the Bearer token, ensure API key, and update store state.
-   * - If API key creation fails we log a warning, but still keep the user logged in.
+   * perform login against the backend.
+   * - on success: persist the user, set the Bearer token, ensure API key, and update store state.
+   * - if API key creation fails we log a warning, but still keep the user logged in.
    */
   async login({ email, password }) {
-    // 1) Authenticate and receive profile (including accessToken).
+    // 1) authenticate and receive profile (including accessToken).
     const res = await api.post<{ data: Profile }>('/auth/login', { email, password })
     const user = res.data
 
-    // 2) Persist the user and configure Bearer token for subsequent requests.
+    // 2) persist the user and configure Bearer token for subsequent requests.
     localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(user))
     api.setToken(user.accessToken || '')
 
-    // 3) Ensure an API key is available and set it on the API client.
+    // 3) ensure an API key is available and set it on the API client.
     try {
       const key = await ensureApiKey()
       api.setApiKey(key)
     } catch (e) {
-      // Non-fatal: some endpoints may rely on X-Noroff-API-Key; we surface a warning for debugging.
+      // non-fatal: some endpoints may rely on X-Noroff-API-Key; we surface a warning for debugging.
       console.warn('Could not create/load API key:', e instanceof Error ? e.message : e)
     }
 
-    // 4) Update in-memory state to trigger UI rerenders.
+    // 4) update in-memory state to trigger UI rerenders.
     set({ user })
   },
 
   /**
-   * Clear all authentication state:
-   * - Remove persisted user and API key.
-   * - Reset API client headers.
-   * - Null out the in-memory user (triggers rerender).
+   * clear all authentication state:
+   * - remove persisted user and API key.
+   * - reset API client headers.
+   * - null out the in-memory user (triggers rerender).
    */
   logout() {
     localStorage.removeItem(STORAGE_USER_KEY)
@@ -131,16 +131,16 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   /**
-   * Merge-patch the current user in memory and in LocalStorage.
-   * Use this after profile edits (e.g., avatar/banner update) to ensure
+   * merge-patch the current user in memory and in LocalStorage.
+   * use this after profile edits (e.g., avatar/banner update) to ensure
    * the header/menu and other subscribers reflect changes immediately.
-   * @param patch Partial user fields to merge into the existing profile.
+   * @param patch partial user fields to merge into the existing profile.
    */
 patchUser(patch) {
   const current = get().user
   if (!current) return
 
-  // Create a new object reference so Zustand subscribers re-render.
+  // create a new object reference so Zustand subscribers re-render.
   const next = { ...current, ...patch }
   set({ user: next })
 
@@ -153,7 +153,7 @@ patchUser(patch) {
 }))
 
 /**
- * On app bootstrap (cold reload), hydrate the API client with any persisted
+ * on app bootstrap (cold reload), hydrate the API client with any persisted
  * tokens so that early requests (before first login) have the correct headers.
  */
 api.setToken(loadUser()?.accessToken || '')

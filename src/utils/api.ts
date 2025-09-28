@@ -1,12 +1,12 @@
 // src/utils/api.ts
 
-/** Base URL for Noroff v2 API (from env or fallback). */
+/** base URL for Noroff v2 API (from env or fallback). */
 const BASE = import.meta.env.VITE_API_BASE || 'https://v2.api.noroff.dev'
 
 let authToken = ''
 let apiKey = ''
 
-/** Build default headers for requests. */
+/** build default headers for requests. */
 function buildHeaders(): HeadersInit {
   return {
     'Content-Type': 'application/json',
@@ -16,11 +16,11 @@ function buildHeaders(): HeadersInit {
 }
 
 /**
- * Perform a fetch request with JSON handling and Noroff error parsing.
+ *pPerform a fetch request with JSON handling and Noroff error parsing.
  *
  * @param method - HTTP verb
  * @param path - API path, starting with `/`
- * @param body - Optional request body (JSON serialized if present)
+ * @param body - optional request body (JSON serialized if present)
  */
 async function request<T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
@@ -41,7 +41,7 @@ async function request<T>(
   }
 
   if (!res.ok) {
-    // Try to extract a useful error message (Noroff style: { errors: [{ message }] })
+    // try to extract a useful error message (Noroff style: { errors: [{ message }] })
     let message = res.statusText || `HTTP ${res.status}`
     if (
       json &&
@@ -60,25 +60,25 @@ async function request<T>(
 }
 
 /**
- * Shared API client with token + API key support.
- * Call `setToken`/`setApiKey` on login to configure.
+ * shared API client with token + API key support.
+ * call `setToken`/`setApiKey` on login to configure.
  */
 export const api = {
-  /** Set bearer token for subsequent requests. */
+  /** set bearer token for subsequent requests. */
   setToken: (t: string) => { authToken = t },
 
-  /** Set Noroff API key for subsequent requests. */
+  /** set Noroff API key for subsequent requests. */
   setApiKey: (k: string) => { apiKey = k },
 
-  /** Shorthand GET. */
+  /** shorthand GET. */
   get: <T>(path: string) => request<T>('GET', path),
 
-  /** Shorthand POST. */
+  /** shorthand POST. */
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
 
-  /** Shorthand PUT. */
+  /** shorthand PUT. */
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
 
-  /** Shorthand DELETE. */
+  /** shorthand DELETE. */
   delete: <T>(path: string) => request<T>('DELETE', path),
 }

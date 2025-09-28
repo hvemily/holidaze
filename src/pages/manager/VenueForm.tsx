@@ -25,11 +25,11 @@ export type VenuePayload = {
 }
 
 type Props = {
-  /** Existing venue to edit (optional). If omitted, creates a new venue. */
+  /** existing venue to edit (optional). if omitted, creates a new venue. */
   initial?: Venue
-  /** Submit handler. Receives a cleaned payload. Can be async. */
+  /** submit handler. Receives a cleaned payload. can be async. */
   onSubmit: (payload: VenuePayload) => void | Promise<void>
-  /** Loading flag to disable the form and buttons while saving. */
+  /** loading flag to disable the form and buttons while saving. */
   submitting?: boolean
 }
 
@@ -37,28 +37,28 @@ type MediaItem = { url: string; alt: string }
 
 /**
  * VenueForm
- * - Controlled form for creating/updating venues.
- * - Validates basic fields and image URLs.
- * - Supports multiple images with reordering; index 0 is the cover.
+ * - controlled form for creating/updating venues.
+ * - validates basic fields and image URLs.
+ * - supports multiple images with reordering; index 0 is the cover.
  */
 export default function VenueForm({ initial, onSubmit, submitting }: Props) {
   const { error: toastError } = useToast()
 
-  // Core fields
+  // core fields
   const [name, setName] = useState(initial?.name ?? '')
   const [description, setDescription] = useState(initial?.description ?? '')
   const [price, setPrice] = useState<number>(Number(initial?.price) || 0)
   const [rating, setRating] = useState<number>(Number(initial?.rating) || 0)
   const [maxGuests, setMaxGuests] = useState<number>(Number(initial?.maxGuests) || 1)
 
-  // Media list (index 0 = cover)
+  // media list (index 0 = cover)
   const [media, setMedia] = useState<MediaItem[]>(
     initial?.media?.length
       ? initial.media.map((m) => ({ url: m?.url ?? '', alt: m?.alt ?? '' }))
       : [{ url: '', alt: '' }]
   )
 
-  // Location + amenities
+  // location + amenities
   const [address, setAddress] = useState(initial?.location?.address ?? '')
   const [city, setCity] = useState(initial?.location?.city ?? '')
   const [country, setCountry] = useState(initial?.location?.country ?? '')
@@ -67,10 +67,10 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
   const [parking, setParking] = useState<boolean>(!!initial?.meta?.parking)
   const [pets, setPets] = useState<boolean>(!!initial?.meta?.pets)
 
-  // Validation summary
+  // validation summary
   const [errors, setErrors] = useState<string[]>([])
 
-  // Sync state when `initial` changes
+  // sync state when `initial` changes
   useEffect(() => {
     if (!initial) return
     setName(initial.name ?? '')
@@ -136,7 +136,7 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
 
     const nextErrors: string[] = []
 
-    // Basic validation
+    // basic validation
     if (!name.trim()) nextErrors.push('Name is required.')
     if (price < 0) nextErrors.push('Price cannot be negative.')
     if (rating < 0 || rating > 5) nextErrors.push('Rating must be between 0 and 5.')
@@ -155,12 +155,12 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
     setErrors(nextErrors)
 
     if (nextErrors.length > 0) {
-      // Show the first error as a toast for quick feedback
+      // show the first error as a toast for quick feedback
       toastError(nextErrors[0])
       return
     }
 
-    // Clean + clamp values
+    // clean + clamp values
     const cleanedMedia =
       media
         .map((m) => ({ url: m.url.trim(), alt: (m.alt || name).trim() }))
@@ -203,7 +203,7 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
         </div>
       )}
 
-      {/* Name */}
+      {/* name */}
       <div className="grid gap-1">
         <label className="text-sm font-medium" htmlFor="vf-name">
           Name
@@ -218,7 +218,7 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
         />
       </div>
 
-      {/* Description */}
+      {/* description */}
       <div className="grid gap-1">
         <label className="text-sm font-medium" htmlFor="vf-desc">
           Description
@@ -231,7 +231,7 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
         />
       </div>
 
-      {/* Price */}
+      {/* price */}
       <div className="grid gap-1">
         <label className="text-sm font-medium" htmlFor="vf-price">
           Price (per night)
@@ -252,7 +252,7 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
         />
       </div>
 
-      {/* Rating */}
+      {/* rating */}
       <div className="grid gap-1">
         <label className="text-sm font-medium" htmlFor="vf-rating">
           Rating
@@ -276,7 +276,7 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
         </div>
       </div>
 
-      {/* Max guests */}
+      {/* max guests */}
       <div className="grid gap-1">
         <label className="text-sm font-medium" htmlFor="vf-guests">
           Max guests
@@ -294,7 +294,7 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
         />
       </div>
 
-      {/* Amenities */}
+      {/* amenities */}
       <div className="grid gap-2">
         <span className="text-sm font-medium">Amenities</span>
         <label className="flex items-center gap-2 text-sm">
@@ -321,7 +321,7 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
         </label>
       </div>
 
-      {/* Images (optional) */}
+      {/* images (optional) */}
       <fieldset className="grid gap-3 rounded-lg border p-3">
         <legend className="px-1 text-sm font-medium">Images (optional)</legend>
 
@@ -433,7 +433,7 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
         </div>
       </fieldset>
 
-      {/* Location */}
+      {/* location */}
       <div className="grid gap-1">
         <label className="text-sm font-medium" htmlFor="vf-address">
           Address
@@ -473,7 +473,7 @@ export default function VenueForm({ initial, onSubmit, submitting }: Props) {
         />
       </div>
 
-      {/* Actions */}
+      {/* actions */}
       <div className="flex gap-2">
         <button
           type="submit"

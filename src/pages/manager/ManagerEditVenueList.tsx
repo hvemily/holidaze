@@ -10,10 +10,10 @@ import { useToast } from '@/components/Toast'
 type RouteParams = { id: string }
 
 /**
- * Edit page for a specific venue.
- * - Loads venue by :id
- * - Submits updates to `/holidaze/venues/:id`
- * - Shows toasts for success/error
+ * edit page for a specific venue.
+ * - loads venue by :id
+ * - submits updates to `/holidaze/venues/:id`
+ * - shows toasts for success/error
  */
 export default function ManagerEditVenue() {
   const { id } = useParams<RouteParams>()
@@ -25,7 +25,7 @@ export default function ManagerEditVenue() {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
-  // Fetch venue details
+  // fetch venue details
   useEffect(() => {
     let ignore = false
 

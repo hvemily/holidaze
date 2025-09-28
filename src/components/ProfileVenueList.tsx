@@ -11,12 +11,12 @@ type Props = {
 }
 
 /**
- * List of venues belonging to a profile.
+ * list of venues belonging to a profile.
  *
- * - Shows fallback when there are no venues.
- * - Displays image, name, price, max guests.
- * - Provides "View" link always; "Edit" and "Delete" buttons only if `canEdit`.
- * - Optional "Create your first venue" CTA when no venues + `canEdit`.
+ * - shows fallback when there are no venues.
+ * - displays image, name, price, max guests.
+ * - provides "View" link always; "Edit" and "Delete" buttons only if `canEdit`.
+ * - optional "Create your first venue" CTA when no venues + `canEdit`.
  */
 export default function ProfileVenueList({
   venues,
@@ -47,7 +47,7 @@ export default function ProfileVenueList({
         return (
           <li key={v.id}>
             <article className="rounded-2xl border bg-white p-3 shadow-sm sm:p-4">
-              {/* Layout: image + content */}
+              {/* layout: image + content */}
               <div className="grid grid-cols-[88px,1fr] gap-3 sm:grid-cols-[112px,1fr]">
                 <img
                   src={img}
@@ -77,7 +77,7 @@ export default function ProfileVenueList({
                     {(v.maxGuests || 1) === 1 ? '' : 's'}
                   </div>
 
-                  {/* Actions: grid on mobile, flex-wrap on larger screens */}
+                  {/* actions: grid on mobile, flex-wrap on larger screens */}
                   <div className="mt-3">
                     <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-2">
                       <Link

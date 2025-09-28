@@ -7,8 +7,8 @@ import { ToastProvider } from './components/Toast'
 import Spinner from './components/Spinner'
 
 /**
- * Route-based code splitting:
- * These screens are relatively heavy; lazy-load them to reduce initial bundle size.
+ * route-based code splitting:
+ * these screens are relatively heavy; lazy-load them to reduce initial bundle size.
  */
 const Venues = lazy(() => import('./pages/venues/Venues'))
 const VenueDetail = lazy(() => import('./pages/venues/VenueDetail'))
@@ -23,9 +23,9 @@ const ManagerVenueBookings = lazy(() => import('./pages/manager/ManagerVenueBook
 
 /**
  * App root:
- * - Wraps the app in ToastProvider (portal-based toasts).
- * - Provides top-level Layout (header/footer).
- * - Uses Suspense to show a lightweight loading state during lazy route loads.
+ * - wraps the app in ToastProvider (portal-based toasts).
+ * - provides top-level Layout (header/footer).
+ * - uses Suspense to show a lightweight loading state during lazy route loads.
  */
 export default function App() {
   return (

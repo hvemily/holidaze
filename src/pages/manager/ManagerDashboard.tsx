@@ -7,21 +7,21 @@ import type { Venue, Booking } from '@/utils/types'
 import Spinner from '@/components/Spinner'
 import { useToast } from '@/components/Toast'
 
-/** Safely convert ISO to timestamp (0 on falsy). */
+/** safely convert ISO to timestamp (0 on falsy). */
 const toTs = (v?: string | null) => (v ? new Date(v).getTime() : 0)
-/** Start of today in local time. */
+/** start of today in local time. */
 const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d }
-/** Upcoming = ends today or later (inclusive). */
+/** upcoming = ends today or later (inclusive). */
 const isUpcoming = (b: Booking) => new Date(b.dateTo).getTime() >= startOfToday().getTime()
 
 type VenueWithBookings = Venue & { bookings?: Booking[] }
 type BookingEx = Booking & { customer?: { name?: string } }
 
 /**
- * Manager dashboard:
- * - Fetches venues owned by the current user (with `_bookings=true`).
- * - Shows a cross-venue upcoming bookings feed.
- * - Card grid of venues with quick actions (View/Edit/Delete) + expandable bookings list.
+ * manager dashboard:
+ * - fetches venues owned by the current user (with `_bookings=true`).
+ * - shows a cross-venue upcoming bookings feed.
+ * - card grid of venues with quick actions (View/Edit/Delete) + expandable bookings list.
  */
 export default function ManagerDashboard() {
   const { user } = useAuth()
@@ -33,13 +33,13 @@ export default function ManagerDashboard() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
-  // Stable date formatter for short dates (e.g., "Jan 2, 2025")
+  // stable date formatter for short dates (e.g., "Jan 2, 2025")
   const dateFmt = useMemo<Intl.DateTimeFormatOptions>(
     () => ({ year: 'numeric', month: 'short', day: 'numeric' }),
     []
   )
 
-  // Fetch owned venues (+bookings) for the current user
+  // fetch owned venues (+bookings) for the current user
   useEffect(() => {
     let ignore = false
 
@@ -79,7 +79,7 @@ export default function ManagerDashboard() {
     })()
 
     return () => { ignore = true }
-    // Re-fetch when user changes. toastError is stable (useCallback in provider).
+    // re-fetch when user changes. toastError is stable (useCallback in provider).
   }, [user?.name, toastError])
 
   async function onDelete(id: string) {
@@ -106,7 +106,7 @@ export default function ManagerDashboard() {
     })
   }
 
-  // Combined cross-venue upcoming bookings feed (sorted by start date)
+  // combined cross-venue upcoming bookings feed (sorted by start date)
   const upcomingFeed = useMemo(() => {
     const items: Array<BookingEx & { venueId: string; venueName: string }> = []
     venues.forEach((v) => {
@@ -147,7 +147,7 @@ export default function ManagerDashboard() {
         </Link>
       </div>
 
-      {/* Cross-venue upcoming bookings */}
+      {/* cross-venue upcoming bookings */}
       <section className="rounded-2xl border bg-white shadow">
         <div className="border-b p-4">
           <h2 className="text-lg font-semibold">Upcoming bookings across your venues</h2>

@@ -5,17 +5,17 @@ export default {
     container: {
       center: true,
       padding: {
-        DEFAULT: "1rem",   // 16px på mobil
-        sm: "1.25rem",     // 20px
-        lg: "2rem",        // 32px
-        xl: "2.5rem",      // 40px
+        DEFAULT: "1rem",
+        sm: "1.25rem",
+        lg: "2rem",
+        xl: "2.5rem",
       },
       screens: {
         sm: "640px",
         md: "768px",
         lg: "1024px",
         xl: "1200px",
-        "2xl": "1120px",   // vår maks-bredde for innhold (bevisst smalere for god leseopplevelse)
+        "2xl": "1120px",
       },
     },
     extend: {

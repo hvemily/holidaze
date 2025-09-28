@@ -5,7 +5,7 @@ import { api } from '@/utils/api'
 import type { Profile as TProfile } from '@/utils/types'
 import { useToast } from '@/components/Toast'
 
-/** Fast, cheap URL check aimed at http(s) images only. */
+/** fast, cheap URL check aimed at http(s) images only. */
 const IS_HTTP_RE = /^https?:\/\/\S+/i
 const isHttpUrl = (u: string) => IS_HTTP_RE.test(u.trim())
 
@@ -13,17 +13,17 @@ const isHttpUrl = (u: string) => IS_HTTP_RE.test(u.trim())
 const avatarAlt = (name: string) => `${name}'s avatar`
 
 /**
- * Modal for updating the user's avatar URL.
+ * modal for updating the user's avatar URL.
  *
- * - Validates that the value looks like an http(s) URL before submitting.
- * - Shows a lightweight live preview when the URL resembles http(s).
- * - Prevents closing while saving to avoid accidental cancellation.
+ * - validates that the value looks like an http(s) URL before submitting.
+ * - shows a lightweight live preview when the URL resembles http(s).
+ * - prevenst closing while saving to avoid accidental cancellation.
  *
- * @param open Controls visibility of the modal.
- * @param onClose Called when the modal should be closed (disabled while saving).
- * @param name Profile handle / name used in the API path (URL-encoded).
- * @param profile Current profile object (used to seed the input).
- * @param onUpdated Callback invoked with the updated profile after success.
+ * @param open controls visibility of the modal.
+ * @param onClose called when the modal should be closed (disabled while saving).
+ * @param name profile handle / name used in the API path (URL-encoded).
+ * @param profile current profile object (used to seed the input).
+ * @param onUpdated callback invoked with updated profile after success.
  */
 export default function EditAvatarModal({
   open,
@@ -45,11 +45,11 @@ export default function EditAvatarModal({
   const { success: toastSuccess, error: toastError } = useToast()
 
   /**
-   * Handle form submit:
-   * - Guard on basic URL validity
+   * handle form submit:
+   * - guard on basic URL validity
    * - PUT to update the avatar
-   * - Prefer the response payload from PUT (avoids an extra GET roundtrip)
-   * - Fallback: if API doesn’t return updated profile, re-fetch it
+   * - prefer response payload from PUT (avoids an extra GET roundtrip)
+   * - fallback: if API doesn’t return updated profile, re-fetch it
    */
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -66,13 +66,13 @@ export default function EditAvatarModal({
       setSaving(true)
       setErr(null)
 
-      // Attempt to update avatar
+      // attempt to update avatar
       const res = await api.put<{ data?: TProfile }>(
         `/holidaze/profiles/${encodeURIComponent(name)}`,
         { avatar: { url: clean, alt: avatarAlt(name) } },
       )
 
-      // Use returned profile if present; otherwise fetch fresh to keep header in sync.
+      // use returned profile if present; otherwise fetch fresh to keep header in sync.
       let updated = res.data
       if (!updated) {
         const refetch = await api.get<{ data: TProfile }>(
@@ -96,12 +96,12 @@ export default function EditAvatarModal({
   return (
     <Modal
       open={open}
-      // While saving, disable closing to avoid accidental loss of progress.
+      // while saving, disable closing to avoid accidental loss of progress.
       onClose={saving ? () => {} : onClose}
       title="Edit profile picture"
     >
       <form onSubmit={onSubmit} className="grid w-[min(90vw,460px)] gap-3">
-        {/* Inline error for validation/submit failures */}
+        {/* inline error for validation/submit failures */}
         {err && (
           <p className="text-sm text-red-600" role="alert" aria-live="polite">
             {err}
@@ -118,7 +118,7 @@ export default function EditAvatarModal({
           value={url}
           onChange={(e) => {
             setUrl(e.target.value)
-            // Clear previous errors as the user edits
+            // clear previous errors as the user edits
             if (err) setErr(null)
             if (previewErr) setPreviewErr(null)
           }}
@@ -131,7 +131,7 @@ export default function EditAvatarModal({
           aria-describedby={previewErr ? 'avatar-preview-error' : undefined}
         />
 
-        {/* Live preview if it looks like an http(s) URL */}
+        {/* live preview if it looks like an https URL */}
         {isHttpUrl(url) && (
           <div className="mt-1 flex items-center gap-3">
             <img

@@ -1,15 +1,15 @@
 // src/components/ProfileHeader.tsx
 import type { Profile } from '@/utils/types'
 
-/** Fixed banner image shown at the top of all profiles. */
+/** fixed banner image shown at the top of all profiles. */
 const FIXED_BANNER =
   'https://images.unsplash.com/photo-1724861290299-29c0bef6641f?w=1600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8N3x8bm9yd2VnaWFuJTIwZmpvcmR8ZW58MHx8MHx8fDA%3D'
 
 /**
- * Profile header component.
- * - Displays a fixed banner.
- * - Shows avatar, name, email, and "Venue Manager" badge.
- * - Falls back to a generated initials avatar if none is provided.
+ * profile header component.
+ * - displays a fixed banner.
+ * - shows avatar, name, email, and "Venue Manager" badge.
+ * - falls back to a generated initials avatar if none is provided.
  */
 export default function ProfileHeader({ profile }: { profile: Profile }) {
   const avatar =
@@ -20,7 +20,7 @@ export default function ProfileHeader({ profile }: { profile: Profile }) {
 
   return (
     <header className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-      {/* Banner (fixed Unsplash image) */}
+      {/* banner (fixed Unsplash image) */}
       <div className="h-28 w-full bg-gray-100 sm:h-40 md:h-52 lg:h-60">
         <img
           src={FIXED_BANNER}
@@ -31,7 +31,7 @@ export default function ProfileHeader({ profile }: { profile: Profile }) {
         />
       </div>
 
-      {/* Avatar + profile info */}
+      {/* avatar + profile info */}
       <div className="-mt-10 px-4 pb-4 sm:-mt-12 sm:px-6 sm:pb-6 md:-mt-16 lg:px-8">
         <div className="flex flex-col items-center text-center">
           <img

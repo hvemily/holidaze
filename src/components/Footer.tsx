@@ -8,9 +8,9 @@ type SocialIconProps = {
 }
 
 /**
- * Small round icon button for external social links.
- * - Uses `aria-label` to announce the destination.
- * - Opens in new tab with proper `rel` for security.
+ * small round icon button for external social links.
+ * - uses aria-label to announce the destination.
+ * - opens in new tab with proper `rel` for security.
  */
 function SocialIcon({ href, label, svg }: SocialIconProps) {
   return (
@@ -21,16 +21,16 @@ function SocialIcon({ href, label, svg }: SocialIconProps) {
       aria-label={label}
       className="rounded-full bg-white/10 p-2 transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
     >
-      {/* Decorative icon only; screen readers use the aria-label on the anchor */}
+      {/* decorative icon only; screen readers use the aria-label on the anchor */}
       <span aria-hidden="true">{svg}</span>
     </a>
   )
 }
 
 /**
- * Global site footer with brand, quick navigation, and social links.
- * - Internal links use React Router's <Link>.
- * - Social links are placeholders (mock) pointing to public home pages.
+ * global site footer with brand, quick navigation, and social links.
+ * - internal links use React Router's <Link>.
+ * - social links are placeholders pointing to public home pages.
  */
 export default function Footer() {
   const year = new Date().getFullYear()
@@ -38,7 +38,7 @@ export default function Footer() {
   return (
     <footer className="bg-holi-nav text-white">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-10 sm:px-6 md:grid-cols-3 lg:px-8">
-        {/* Left: Brand */}
+        {/* left: brand */}
         <div>
           <h2 className="text-lg font-bold tracking-wide">HOLIDAZE</h2>
           <p className="mt-2 leading-relaxed text-gray-200/90">
@@ -47,7 +47,7 @@ export default function Footer() {
           </p>
         </div>
 
-        {/* Middle: Navigation */}
+        {/* middle: nav */}
         <nav aria-label="Footer" className="md:justify-self-center">
           <h3 className="text-sm font-semibold">Navigation</h3>
           <ul className="mt-3 space-y-2 text-sm">
@@ -74,7 +74,7 @@ export default function Footer() {
           </ul>
         </nav>
 
-        {/* Right: Socials (mock links) */}
+        {/* right: socials mock links) */}
         <div className="md:justify-self-end">
           <h3 className="text-sm font-semibold">Follow us</h3>
           <div className="mt-3 flex gap-4">
@@ -89,7 +89,7 @@ export default function Footer() {
               }
             />
 
-            {/* X (Twitter) */}
+            {/* X  */}
             <SocialIcon
               href="https://x.com/"
               label="X"
@@ -100,7 +100,7 @@ export default function Footer() {
               }
             />
 
-            {/* Instagram */}
+            {/* Insta */}
             <SocialIcon
               href="https://www.instagram.com/"
               label="Instagram"

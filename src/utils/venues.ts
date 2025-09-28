@@ -12,7 +12,7 @@ export type SortValue =
 export const COUNTRY = 'norway'
 export const LIMIT = 20
 
-// Shared API response wrapper
+// shared API response wrapper
 export type ApiResponse<T> = { data: T }
 
 // --- small helpers ---
@@ -23,7 +23,7 @@ const toNum = (v: unknown, fb = 0) => {
 const ts = (v?: string) => (v ? new Date(v).getTime() : 0)
 const tsCreatedUpdated = (v: Venue) => Math.max(ts(v.created), ts(v.updated))
 
-// Normalize diacritics and Norwegian special chars (æ/ø/å)
+// normalize diacritics and Norwegian special chars (æ/ø/å)
 // so "Tønsberg" also matches "Tonsberg", etc.
 const norm = (s?: string) => {
   if (!s) return ''
@@ -81,8 +81,8 @@ export async function fetchVenueById(id: string): Promise<Venue | null> {
 }
 
 /**
- * Fetch one page of venues from the API.
- * Note: we do NOT send `q` to the API – filtering is done locally.
+ * fetch one page of venues from the API.
+ * note: we do NOT send `q` to the API – filtering is done locally.
  */
 export async function fetchPage(page: number, sort: SortValue): Promise<Venue[]> {
   const [field, order] = sort.split(':') as [string, 'asc' | 'desc']
@@ -109,7 +109,7 @@ export async function fetchPage(page: number, sort: SortValue): Promise<Venue[]>
   }
 }
 
-// Extract a UUID inside arbitrary input (slug, URL, clipboard text)
+// extract a UUID inside arbitrary input (slug, URL, clipboard text)
 export function extractUuid(input: string): string | null {
   const m = input.match(
     /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/
@@ -148,8 +148,8 @@ export async function fetchBookingsForVenue(venueId: string): Promise<Booking[]>
 }
 
 /**
- * Check if two half-open ranges [from, to) overlap.
- * Interpretation: check-out day is available (to is exclusive).
+ * check if two half-open ranges [from, to) overlap.
+ * interpretation: check-out day is available (to is exclusive).
  */
 export function rangesOverlap(aFrom: string, aTo: string, bFrom: string, bTo: string) {
   const A1 = new Date(aFrom).getTime()

@@ -14,7 +14,7 @@ import { useAuth } from '@/stores/auth'
 type RouteParams = { id: string }
 type RangeValue = Date | [Date, Date] | null
 
-/** Build a responsive srcSet/sizes for common CDNs (Unsplash/imgix/Cloudinary). */
+/** build a responsive srcSet/sizes for common CDNs (Unsplash/imgix/Cloudinary). */
 function buildSrcSet(url: string): { srcSet?: string; sizes?: string } {
   const widths = [768, 1024, 1280, 1600, 2000]
 
@@ -29,7 +29,7 @@ function buildSrcSet(url: string): { srcSet?: string; sizes?: string } {
     }
   }
 
-  // Cloudinary (simple width transform)
+  // cloudinary (simple width transform)
   if (url.includes('res.cloudinary.com')) {
     const srcSet = widths
       .map((w) => url.replace('/upload/', `/upload/w_${w},c_fill/`) + ` ${w}w`)
@@ -40,11 +40,11 @@ function buildSrcSet(url: string): { srcSet?: string; sizes?: string } {
     }
   }
 
-  // Unknown source – return nothing (browser will use `src` only)
+  // unknown source – return nothing (browser will use `src` only)
   return {}
 }
 
-/** Inclusive nights between two dates at local midnight. */
+/** inclusive nights between two dates at local midnight. */
 function nightsBetween(a?: Date, b?: Date) {
   if (!a || !b) return 0
   const d1 = new Date(a); d1.setHours(0, 0, 0, 0)
@@ -54,10 +54,10 @@ function nightsBetween(a?: Date, b?: Date) {
 
 /**
  * Venue detail page:
- * - Loads a venue (with `_bookings=true`) and shows gallery, info, amenities.
- * - React-Calendar for selecting a date range; calculates nights × price.
- * - Handles booking flow with a confirmation modal and error toasts.
- * - Uses responsive images + a max width wrapper to avoid over-stretching the hero image.
+ * - loads a venue (with `_bookings=true`) and shows gallery, info, amenities.
+ * - react-Calendar for selecting a date range; calculates nights × price.
+ * - handles booking flow with a confirmation modal and error toasts.
+ * - uses responsive images + a max width wrapper to avoid over-stretching the hero image.
  */
 export default function VenueDetail() {
   const { id } = useParams<RouteParams>()
@@ -71,16 +71,16 @@ export default function VenueDetail() {
 
   const { error: toastError, success: toastSuccess } = useToast()
 
-  // Gallery state
+  // gallery state
   const [activeIdx, setActiveIdx] = useState(0)
-  // Tiny-image heuristic: if the natural image width is small, use object-contain to avoid ugly upscaling
+  // tiny-image heuristic: if the natural image width is small, use object-contain to avoid ugly upscaling
   const [tiny, setTiny] = useState(false)
 
-  // Calendar / booking state
+  // calendar / booking state
   const [range, setRange] = useState<RangeValue>(null)
   const [guests, setGuests] = useState<number>(1)
 
-  // Confirmation modal
+  // confirmation modal
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   const canReserve = useMemo(
@@ -125,13 +125,13 @@ export default function VenueDetail() {
     return () => { ignore = true }
   }, [id, toastError])
 
-  // Page title
+  // page title
   useEffect(() => {
     document.title = venue?.name ? `Holidaze | ${venue.name}` : 'Holidaze | Venue'
   }, [venue?.name])
 
   function handleReserve() {
-    // Not logged in → send to login with toast
+    // not logged in → send to login with toast
     if (!user) {
       navigate('/login', {
         state: { toast: { type: 'error', message: 'You need to be logged in to book a venue.' } },
@@ -154,7 +154,7 @@ export default function VenueDetail() {
     if (!id || !Array.isArray(range) || !range[0] || !range[1]) return
     try {
       setBooking(true)
-      // Normalize times slightly (midday start / morning end) to avoid TZ edge cases
+      // normalize times slightly (midday start / morning end) to avoid TZ edge cases
       const from = new Date(range[0]); from.setHours(12, 0, 0, 0)
       const to   = new Date(range[1]); to.setHours(10, 0, 0, 0)
 
@@ -165,7 +165,7 @@ export default function VenueDetail() {
         venueId: id,
       })
 
-      // Refresh venue (and bookings) to reflect new state
+      // refresh venue (and bookings) to reflect new state
       const updated = await api.get<{ data: Venue }>(
         `/holidaze/venues/${encodeURIComponent(id)}?_bookings=true&_=${Date.now()}`
       )
@@ -174,7 +174,7 @@ export default function VenueDetail() {
       toastSuccess('Booked successfully!')
       setConfirmOpen(false)
     } catch (e: unknown) {
-      // Handle auth errors explicitly → redirect to login
+      // handle auth errors explicitly → redirect to login
       if (axios.isAxiosError(e)) {
         const status = e.response?.status
         const msg = String(e.response?.data?.message || '')
@@ -195,7 +195,7 @@ export default function VenueDetail() {
     }
   }
 
-  // Gallery list (fallback if venue has no media)
+  // gallery list (fallback if venue has no media)
   const gallery = useMemo(
     () =>
       venue?.media?.length
@@ -228,7 +228,7 @@ export default function VenueDetail() {
 
       {!loading && venue && (
         <>
-          {/* Hero – wrapped in a max-width container to avoid over-stretching on ultra-wide screens */}
+          {/* hero – wrapped in a max-width container to avoid over-stretching on ultra-wide screens */}
           {mainImg && (
             <div className="relative mx-auto overflow-hidden rounded-2xl border shadow max-w-5xl">
               <img
@@ -238,7 +238,7 @@ export default function VenueDetail() {
                 className={`block w-full h-48 sm:h-64 md:h-80 lg:h-[520px] ${tiny ? 'object-contain bg-gray-100' : 'object-cover'}`}
                 decoding="async"
                 onLoad={(e) => {
-                  // If the image itself is small, avoid heavy upscaling artifacts
+                  // if the image itself is small, avoid heavy upscaling artifacts
                   const nW = (e.currentTarget as HTMLImageElement).naturalWidth
                   setTiny(nW < 1200)
                 }}
@@ -249,7 +249,7 @@ export default function VenueDetail() {
             </div>
           )}
 
-          {/* Thumbnails */}
+          {/* thumbnails */}
           {gallery.length > 1 && (
             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {gallery.slice(0, 6).map((m, i) => {
@@ -278,9 +278,9 @@ export default function VenueDetail() {
             </div>
           )}
 
-          {/* Two columns (stack on mobile) */}
+          {/* two columns (stack on mobile) */}
           <div className="mt-6 grid gap-6 sm:mt-8 md:[grid-template-columns:minmax(0,1fr)_360px] lg:[grid-template-columns:minmax(0,1fr)_380px]">
-            {/* Left column */}
+            {/* left column */}
             <div className="grid min-w-0 gap-5">
               <div>
                 <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">
@@ -317,7 +317,7 @@ export default function VenueDetail() {
               </div>
             </div>
 
-            {/* Right column – booking */}
+            {/* right column – booking */}
             <aside className="self-start md:sticky md:top-20 min-w-0">
               <div className="rounded-2xl border bg-white p-4 shadow">
                 <h2 className="mb-3 text-lg font-semibold">Availability</h2>
@@ -374,7 +374,7 @@ export default function VenueDetail() {
             </aside>
           </div>
 
-          {/* Confirmation modal */}
+          {/* confirmation modal */}
           <Modal
             open={confirmOpen}
             onClose={() => (booking ? null : setConfirmOpen(false))}

@@ -15,10 +15,10 @@ type Props = {
 }
 
 /**
- * Compact search/filter bar for venue listings.
+ * compact search/filter bar for venue listings.
  * - "Where" (free text), Check-in/out dates, "Who" (guest count) and a Search button.
- * - Desktop: all fields inline; Mobile: dates move below as a separate row.
- * - Emits changes via controlled props, and calls `onSubmit` on form submit.
+ * - desktop: all fields inline; Mobile: dates move below as a separate row.
+ * - emits changes via controlled props, and calls `onSubmit` on form submit.
  */
 export default function VenueFilters({
   q, onQChange,
@@ -61,10 +61,10 @@ export default function VenueFilters({
           />
         </div>
 
-        {/* Divider */}
+        {/* divider */}
         <div className="hidden w-px self-stretch bg-gray-200 md:block" />
 
-        {/* Check-in (desktop) */}
+        {/* check-in (desktop) */}
         <div className="hidden px-4 py-2.5 md:block">
           <label htmlFor={inId} className="block text-[11px] uppercase tracking-wide text-gray-500">
             Check-in
@@ -79,10 +79,10 @@ export default function VenueFilters({
           />
         </div>
 
-        {/* Divider */}
+        {/* divider */}
         <div className="hidden w-px self-stretch bg-gray-200 md:block" />
 
-        {/* Check-out (desktop) */}
+        {/* check-out (desktop) */}
         <div className="hidden px-4 py-2.5 md:block">
           <label htmlFor={outId} className="block text-[11px] uppercase tracking-wide text-gray-500">
             Check-out
@@ -97,10 +97,10 @@ export default function VenueFilters({
           />
         </div>
 
-        {/* Divider */}
+        {/* divider */}
         <div className="hidden w-px self-stretch bg-gray-200 md:block" />
 
-        {/* Who */}
+        {/* who */}
         <div className="px-4 py-2.5">
           <label htmlFor={whoId} className="block text-[11px] uppercase tracking-wide text-gray-500">
             Who
@@ -118,7 +118,7 @@ export default function VenueFilters({
           />
         </div>
 
-        {/* Search button */}
+        {/* search button */}
         <button
           type="submit"
           disabled={busy}
@@ -128,7 +128,7 @@ export default function VenueFilters({
         </button>
       </div>
 
-      {/* Mobile-only date row */}
+      {/* mobile-only date row */}
       <div className="mt-2 grid gap-2 md:hidden">
         <div className="flex gap-2">
           <div className="flex-1 rounded-xl border px-3 py-2">
