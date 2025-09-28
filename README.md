@@ -7,12 +7,23 @@ The goal was to demonstrate skills learned over the past two years and deliver a
 **Brief:**  
 Holidaze, a new accommodation booking site, required a modern front-end for their API. The feature requirements were defined, but all design and UX decisions were up to me.
 
-🔗 **Live site:** [https://greatholidaze.netlify.app](https://greatholidaze.netlify.app)  
-🔗 **API documentation:**  
-- [Noroff API v2 docs](https://docs.noroff.dev/docs/v2)  
-- [Swagger reference](https://v2.api.noroff.dev/docs/static/index.html#/)
-  
-🔗 **Figma project** [https://www.figma.com/proto/sQftI9B3EAqHZQiczIKg0f/Holidaze?node-id=0-1&t=tL0lcZpJIk7STO99-1](https://www.figma.com/proto/sQftI9B3EAqHZQiczIKg0f/Holidaze?node-id=0-1&t=tL0lcZpJIk7STO99-1)
+## 🔗 Project Links
+
+- **GitHub Repository:**  
+  [https://github.com/hvemily/holidaze](https://github.com/hvemily/holidaze)
+
+- **Kanban Board:**  
+  [https://github.com/users/hvemily/projects/6](https://github.com/users/hvemily/projects/6)
+
+- **Roadmap:**  
+  [https://github.com/users/hvemily/projects/6/views/4](https://github.com/users/hvemily/projects/6/views/4)
+
+- **Live Website (Netlify):**  
+  [https://greatholidaze.netlify.app](https://greatholidaze.netlify.app)
+
+- **Figma Prototype:**  
+  [Figma Link](https://www.figma.com/proto/sOftI9B3EAqHZQiczlKg0f/Holidaze?node-id=0-1&t=tL0cZpJlk7STO99-1)
+
 
 ---
 
