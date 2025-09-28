@@ -94,8 +94,6 @@ export default function Venues() {
             }
           }
 
-
-
           // Try extracting UUID from query
           const uuid = extractUuid(qTrim)
           if (uuid) {
@@ -178,9 +176,8 @@ export default function Venues() {
   }
 
   useEffect(() => {
-  document.title = "Holidaze | Home"
-}, [])
-
+    document.title = 'Holidaze | Home'
+  }, [])
 
   // ------- Availability fetch when dates are set -------
   useEffect(() => {
@@ -242,9 +239,18 @@ export default function Venues() {
 
   return (
     <>
-      <Hero />
+      {/* Full-bleed wrapper cancels Layout's horizontal padding (px-4/sm:px-6/lg:px-8).
+          This ensures the hero truly spans edge-to-edge on all devices. */}
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+        <Hero />
+      </div>
 
-      <section id="venues-list" className="mx-auto grid max-w-7xl gap-6 px-4 py-8">
+      {/* Centered content container under the full-bleed hero.
+          The symmetric px values make left/right gutters identical. */}
+      <section
+        id="venues-list"
+        className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:px-8"
+      >
         <VenueFilters
           q={q}
           onQChange={setQ}

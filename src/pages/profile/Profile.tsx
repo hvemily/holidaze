@@ -28,7 +28,7 @@ type VenueWithBookings = Venue & { bookings?: BookingEx[] }
  */
 export default function Profile() {
   const { name } = useParams<RouteParams>()
-  const { user } = useAuth()
+  const { user, patchUser } = useAuth()
   const { profile, bookings, venues, setVenues, loading, error, setProfile } = useProfileData(name)
   const { success: toastSuccess, error: toastError } = useToast()
 
@@ -321,7 +321,13 @@ export default function Profile() {
         onClose={() => setOpenEditProfile(false)}
         name={safeName}
         profile={profile}
-        onUpdated={(p: TProfile) => setProfile(p)}
+        onUpdated={(p: TProfile) => {
+          setProfile(p)
+          if (isSelf) {
+            // keep the global auth user in sync so the header avatar updates instantly
+            patchUser({ avatar: p.avatar, banner: p.banner })
+          }
+        }}
       />
     </section>
   )

@@ -90,12 +90,14 @@ export default function UserMenu({ user, onLogoutClick }: Props) {
         aria-expanded={open}
         aria-controls="user-menu-popover"
       >
-        <img
-          src={avatar}
-          alt={user.avatar?.alt || `${user.name}'s avatar`}
-          className="h-8 w-8 rounded-full object-cover"
-          referrerPolicy="no-referrer"
-        />
+      <img
+        key={avatar}                 // 🔸 forces remount when URL changes
+        src={avatar}
+        alt={user.avatar?.alt || `${user.name}'s avatar`}
+        className="h-8 w-8 rounded-full object-cover"
+        referrerPolicy="no-referrer"
+      />
+
         <ChevronDown
           size={16}
           className={`text-holi-nav transition-transform ${open ? 'rotate-180' : ''}`}

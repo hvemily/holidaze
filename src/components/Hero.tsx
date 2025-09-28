@@ -6,6 +6,11 @@
  * - Uses srcSet + sizes for responsive loading.
  * - Includes gradient overlay for text readability.
  * - Provides a call-to-action link to scroll down to the venues list.
+ *
+ * Full-bleed note:
+ * - The page (Venues.tsx) wraps this component in a negative-margin container
+ *   to cancel layout paddings. This keeps the hero container-agnostic and avoids
+ *   sub-pixel "white sliver" issues on mobile.
  */
 export default function Hero() {
   // Base Unsplash image URL (without width/quality params).
@@ -17,8 +22,8 @@ export default function Hero() {
       className="
         relative
         h-[56vh] md:h-[68vh]
-        w-screen
-        ml-[calc(50%-50vw)] mr-[calc(50%-50vw)]
+        w-full           /* fill the wrapper; wrapper handles full-bleed */
+        overflow-clip    /* clip any sub-pixel overflow */
       "
     >
       {/* Responsive background image */}
