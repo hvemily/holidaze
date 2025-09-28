@@ -239,14 +239,13 @@ export default function Venues() {
 
   return (
     <>
-      {/* Full-bleed wrapper cancels Layout's horizontal padding (px-4/sm:px-6/lg:px-8).
-          This ensures the hero truly spans edge-to-edge on all devices. */}
-      <div className="-mx-4 sm:-mx-6 lg:-mx-8">
-        <Hero />
-      </div>
 
-      {/* Centered content container under the full-bleed hero.
-          The symmetric px values make left/right gutters identical. */}
+
+        <Hero />
+
+
+      {/* centered content container under the full-bleed hero.
+          the symmetric px values make left/right gutters identical. */}
       <section
         id="venues-list"
         className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:px-8"

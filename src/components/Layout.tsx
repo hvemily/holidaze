@@ -7,7 +7,7 @@ import { useToast } from './Toast'
 import Modal from './Modal'
 import UserMenu from './UserMenu'
 import Footer from './Footer'
-// Logo
+
 import logo from '@/assets/holidaze-logo.png'
 
 type NavToastState =
@@ -15,17 +15,17 @@ type NavToastState =
   | { toast?: { type: 'success' | 'error'; message: string } }
 
 /**
- * App-wide layout:
- * - Sticky header with logo, auth links or user menu
- * - Mobile slide-down auth panel
- * - Global toast handoff via navigation state
- * - Footer
- * - Logout confirmation modal
+ * app-wide layout:
+ * - sticky header with logo, auth links or user menu
+ * - mobile slide-down auth panel
+ * - global toast handoff via navigation state
+ * - footer
+ * - logout confirmation modal
  *
- * Accessibility niceties:
- * - Skip link to main content
- * - Locks body scroll when mobile menu is open
- * - Focus the first actionable item when the mobile panel opens
+ * accessibility niceties:
+ * - skip link to main content
+ * - locks body scroll when mobile menu is open
+ * - focus the first actionable item when the mobile panel opens
  * - ESC closes the mobile panel
  */
 export default function Layout({ children }: PropsWithChildren) {
@@ -52,12 +52,12 @@ useEffect(() => {
       error(t.message)
     }
 
-    // Clear state so the toast doesn't repeat on back/forward.
+    // clear state so the toast doesn't repeat on back/forward.
     navigate(location.pathname + location.search, { replace: true })
   }
 }, [location, navigate, success, error])
 
-  // Confirmed logout handler.
+  // confirmed logout handler.
   function handleLogoutConfirm() {
     logout()
     setOpenLogoutConfirm(false)
@@ -65,12 +65,12 @@ useEffect(() => {
     navigate('/')
   }
 
-  // Close mobile menu on route change (e.g., after clicking a link inside it).
+  // close mobile menu on route change (e.g., after clicking a link inside it).
   useEffect(() => {
     setMobileOpen(false)
   }, [location.pathname])
 
-  // Lock body scroll when mobile menu is open.
+  // lock body scroll when mobile menu is open.
   useEffect(() => {
     if (!mobileOpen) return
     const prev = document.body.style.overflow
@@ -91,7 +91,7 @@ useEffect(() => {
     return () => document.removeEventListener('keydown', onKey)
   }, [mobileOpen])
 
-  // When the mobile panel opens, focus the first focusable element.
+  // when the mobile panel opens, focus the first focusable element.
   useEffect(() => {
     if (!mobileOpen || !panelRef.current) return
     const firstFocusable = panelRef.current.querySelector<HTMLElement>(
@@ -102,7 +102,7 @@ useEffect(() => {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Skip to content for keyboard users */}
+      {/* skip to content for keyboard users */}
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:text-black"
@@ -110,7 +110,7 @@ useEffect(() => {
         Skip to main content
       </a>
 
-      {/* Header */}
+      {/* header */}
       <header
         className="sticky top-0 z-50 bg-header"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
@@ -123,17 +123,17 @@ useEffect(() => {
           }}
         >
           <div className="flex items-center justify-between py-3">
-            {/* Left: Logo */}
+            {/* left: logo */}
             <Link to="/" className="flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70">
               <img src={logo} alt="Holidaze logo" className="h-12 w-auto md:h-16" />
             </Link>
 
-            {/* Right: nav / user menu */}
+            {/* right: nav / user menu */}
             <nav className="flex items-center gap-4 text-sm">
               {!user ? (
                 !onAuthPage && (
                   <>
-                    {/* Mobile hamburger */}
+                    {/* mobile hamburger */}
                     <button
                       type="button"
                       aria-label="Open menu"
@@ -149,7 +149,7 @@ useEffect(() => {
                       </svg>
                     </button>
 
-                    {/* Desktop links */}
+                    {/* desktop links */}
                     <NavLink
                       to="/register?role=manager"
                       className="hidden md:inline text-nav underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
@@ -182,7 +182,7 @@ useEffect(() => {
                     Home
                   </NavLink>
 
-                  {/* Username as non-interactive label */}
+                  {/* username as non-interactive label */}
                   <span
                     className="hidden max-w-[18ch] truncate text-nav font-medium md:inline"
                     aria-label="Logged in user"
@@ -197,16 +197,16 @@ useEffect(() => {
             </nav>
           </div>
 
-          {/* Mobile slide-down panel (full width, under header) */}
+          {/* mobile slide-down panel (full width, under header) */}
           {!user && mobileOpen && !onAuthPage && (
             <>
-              {/* Backdrop */}
+              {/* backdrop */}
               <div
                 className="fixed inset-0 bg-black/30 md:hidden"
                 onClick={() => setMobileOpen(false)}
                 aria-hidden="true"
               />
-              {/* Panel */}
+              {/* panel */}
               <div
                 id="mobile-auth-menu"
                 ref={panelRef}
@@ -231,14 +231,14 @@ useEffect(() => {
         </div>
       </header>
 
-      {/* Main content */}
+      {/* main content */}
       <main id="main-content" className="mx-auto flex-1 max-w-7xl px-4 pb-6 sm:px-6 lg:px-8">
         {children}
       </main>
 
       <Footer />
 
-      {/* Logout confirm modal */}
+      {/* logout confirm modal */}
       <Modal open={openLogoutConfirm} onClose={() => setOpenLogoutConfirm(false)} title="Log out?">
         <div className="grid gap-3">
           <p className="text-sm text-gray-700">Are you sure you want to log out?</p>
